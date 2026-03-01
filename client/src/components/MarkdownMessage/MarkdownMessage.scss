@@ -1,0 +1,327 @@
+.md {
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--text-primary);
+  word-break: break-word;
+
+  // Headings
+  h1 {
+    font-size: 1.45em;
+    font-weight: 700;
+    margin: 0.9em 0 0.4em;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.25em;
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
+  h2 {
+    font-size: 1.2em;
+    font-weight: 700;
+    margin: 0.85em 0 0.35em;
+    color: var(--text-primary);
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
+  h3 {
+    font-size: 1.05em;
+    font-weight: 600;
+    margin: 0.75em 0 0.3em;
+    color: var(--text-primary);
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
+  // Paragraphs
+  p {
+    margin: 0 0 0.6em;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  // Bold / italic
+  strong {
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  em {
+    font-style: italic;
+  }
+
+  // Lists
+  ul,
+  ol {
+    margin: 0.4em 0 0.6em 1.4em;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  li>ul,
+  li>ol {
+    margin-top: 4px;
+    margin-bottom: 0;
+  }
+
+  // Horizontal rule
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 1em 0;
+  }
+
+  // Blockquote
+  blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 6px 12px;
+    margin: 0.6em 0;
+    color: var(--text-secondary);
+    background: var(--accent-dim);
+    border-radius: 0 6px 6px 0;
+
+    p {
+      margin: 0;
+    }
+  }
+
+  // Inline code
+  code:not(pre code) {
+    font-family: 'Roboto Mono', 'SFMono-Regular', Consolas, monospace;
+    font-size: 0.88em;
+    background: #2a2a2a;
+    color: var(--accent);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border-input);
+  }
+
+  // Code block wrapper — теперь обёрнут в .md-code-block
+  pre {
+    margin: 0;
+    background: transparent !important;
+
+    code {
+      font-family: 'Roboto Mono', 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.875em;
+      line-height: 1.65;
+      display: block;
+      overflow-x: auto;
+      padding: 16px 18px;
+      background: transparent !important;
+      border: none;
+      color: #abb2bf;
+    }
+  }
+
+  // Images
+  .md-image {
+    max-width: 100%;
+    border-radius: 10px;
+    display: block;
+    margin: 0.4em 0;
+  }
+
+  // Links
+  a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+
+    &:hover {
+      color: var(--accent-hover);
+    }
+  }
+
+  // Tables — обёртка с шапкой
+  .md-table-block {
+    margin: 0.7em 0;
+    border-radius: 10px;
+    border: 1px solid var(--border-input);
+    overflow: hidden;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    &__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 14px;
+      background: #1e2530;
+      border-bottom: 1px solid var(--border-input);
+    }
+
+    &__label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 500;
+
+      svg {
+        flex-shrink: 0;
+      }
+    }
+
+    &__copy {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border: 1px solid #3a3a3a;
+      border-radius: 5px;
+      background: transparent;
+      color: #888;
+      font-size: 12px;
+      font-family: 'Roboto', sans-serif;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+
+      &:hover {
+        color: var(--accent);
+        border-color: var(--accent-border);
+        background: var(--accent-dim);
+      }
+
+      svg {
+        flex-shrink: 0;
+      }
+    }
+  }
+
+  .md-table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.93em;
+    min-width: 400px;
+  }
+
+  thead tr {
+    background: #1e2530;
+    border-bottom: 2px solid var(--border-input);
+  }
+
+  th {
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--accent);
+    white-space: nowrap;
+    letter-spacing: 0.2px;
+  }
+
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+    vertical-align: top;
+  }
+
+  tbody tr {
+    transition: background 0.12s;
+
+    &:last-child td {
+      border-bottom: none;
+    }
+
+    &:nth-child(even) {
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    &:hover {
+      background: rgba(16, 185, 129, 0.06);
+    }
+  }
+}
+
+.md-code-block {
+  margin: 0.7em 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #333;
+  background: #161b22;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 14px;
+    background: #1c2030;
+    border-bottom: 1px solid #2a2a2a;
+  }
+
+  &__lang {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    text-transform: lowercase;
+    letter-spacing: 0.3px;
+  }
+
+  &__copy {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border: 1px solid #3a3a3a;
+    border-radius: 5px;
+    background: transparent;
+    color: #888;
+    font-size: 12px;
+    font-family: 'Roboto', sans-serif;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+
+    &:hover {
+      color: var(--accent);
+      border-color: var(--accent-border);
+      background: var(--accent-dim);
+    }
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+}
+
+.md__cursor {
+  color: var(--accent);
+  animation: cursor-blink 0.9s step-end infinite;
+}
+
+@keyframes cursor-blink {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
+}
