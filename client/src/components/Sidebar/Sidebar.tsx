@@ -1,22 +1,27 @@
+import { useEffect } from 'react';
 import { useChatStore } from '../../store/chatStore';
 import './Sidebar.scss';
+import { chatApi } from '../../api/chats';
 
 export default function Sidebar() {
   const chats = useChatStore((s) => s.chats);
-  const activeChatId = useChatStore((s) => s.activeChatId);
-  const createChat = useChatStore((s) => s.createChat);
+  const setChats = useChatStore((s) => s.setChats);
   const deleteChat = useChatStore((s) => s.deleteChat);
   const setActiveChat = useChatStore((s) => s.setActiveChat);
+  const user = useChatStore(s => s.user)
+
+  useEffect(() => {
+    const loadChats = async () => {
+      await chatApi.getChats().then(res => setChats(res.map(c => ({ ...c, messages: [] }))));
+    }
+
+    loadChats()
+  }, [])
 
   return (
     <aside className="sidebar">
       <div className="sidebar__header">
-        <span className="sidebar__logo">VakaChat</span>
-        <button className="sidebar__new-btn" onClick={createChat} title="Новый чат">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-        </button>
+        <span className="sidebar__logo">vakachat</span>
       </div>
 
       <div className="sidebar__chats">
@@ -24,9 +29,10 @@ export default function Sidebar() {
           <p className="sidebar__empty-hint">Нет чатов. Создай первый!</p>
         )}
         {chats.map((chat) => (
-          <div
+          <a
+            href={`/chats/${chat.id}`}
             key={chat.id}
-            className={`sidebar__item ${activeChatId === chat.id ? 'sidebar__item--active' : ''}`}
+            className={`sidebar__item ${'3' === chat.id ? 'sidebar__item--active' : ''}`}
             onClick={() => setActiveChat(chat.id)}
           >
             <svg className="sidebar__item-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -45,15 +51,16 @@ export default function Sidebar() {
                 <path d="M18 6L6 18M6 6l12 12" />
               </svg>
             </button>
-          </div>
+          </a>
         ))}
       </div>
 
       <div className="sidebar__user">
         <div className="sidebar__user-avatar">А</div>
         <div className="sidebar__user-info">
-          <span className="sidebar__user-name">Пользователь</span>
-          <span className="sidebar__user-tokens">100 000 токенов</span>
+          <span className="sidebar__user-name">{user && user.email}</span>
+          <span className="sidebar__user-tokens">{user && parseInt(user.balance).toFixed(2)} ₽</span>
+          <button className="sidebar__user-tokens">Выйти</button>
         </div>
       </div>
     </aside>

@@ -1,23 +1,11 @@
 import type { OpenRouterModel, Attachment } from '../types';
+import { getAccessToken } from './client';
 
-const BASE_URL = 'https://openrouter.ai/api/v1';
-
-function getHeaders(): HeadersInit {
-  return {
-    Authorization: `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
-    'Content-Type': 'application/json',
-    'HTTP-Referer': window.location.origin,
-    'X-Title': 'VakaChat',
-  };
-}
+import { client } from "./client"; // твой настроенный axios/fetch клиент
 
 export async function fetchModels(): Promise<OpenRouterModel[]> {
-  const response = await fetch(`${BASE_URL}/models`, {
-    headers: getHeaders(),
-  });
-  if (!response.ok) throw new Error(`Failed to fetch models: ${response.status}`);
-  const data = await response.json();
-  return data.data as OpenRouterModel[];
+  const data = await client.get<{ data: OpenRouterModel[] }>("/models");
+  return data.data;
 }
 
 type ContentPart =
@@ -41,7 +29,6 @@ export function buildApiContent(text: string, attachments?: Attachment[]): strin
   const parts: ContentPart[] = [];
   if (fullText) parts.push({ type: 'text', text: fullText });
   for (const img of images) {
-    console.log(img)
     parts.push({ type: 'image_url', image_url: { url: img.data } });
   }
   return parts;
@@ -83,34 +70,41 @@ function extractContent(content: unknown): string {
 }
 
 export async function streamChat(
-  messages: ApiMessage[],
+  chatId: string,
+  userMessage: string,
   model: string,
   onChunk: (chunk: string) => void,
   onDone: () => void,
   onError: (error: Error) => void,
   options?: StreamOptions,
   signal?: AbortSignal,
+  onImage?: (url: string, content: string) => void,
 ): Promise<void> {
-  let response: Response;
-
-  const allMessages = [
-    ...(options?.systemPrompt
-      ? [{ role: 'system', content: options.systemPrompt }]
-      : []),
-    ...messages,
-  ];
-
-  const isImageModel = options?.imageModel ?? false;
-  const body: Record<string, unknown> = { model, messages: allMessages };
-  if (!isImageModel) body.stream = true;
-  if (options?.plugins?.length) {
-    body.plugins = options.plugins.map((id) => ({ id }));
+  const token = getAccessToken();
+  if (!token) {
+    onError(new Error('Unauthorized: no access token'));
+    return;
   }
 
+  const isImageModel = options?.imageModel ?? false;
+
+  const body: Record<string, unknown> = {
+    chatId,
+    userMessage,
+    model,
+    isImageModel,
+    ...(options?.systemPrompt ? { systemPrompt: options.systemPrompt } : {}),
+    ...(options?.plugins?.length ? { plugins: options.plugins } : {}),
+  };
+
+  let response: Response;
   try {
-    response = await fetch(`${BASE_URL}/chat/completions`, {
+    response = await fetch(`${import.meta.env.BASE_URL}/chats/${chatId}/proxy`, {
       method: 'POST',
-      headers: getHeaders(),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
       body: JSON.stringify(body),
       signal,
     });
@@ -120,30 +114,26 @@ export async function streamChat(
     return;
   }
 
-  if (!response.ok) {
-    onError(new Error(`API error: ${response.status}`));
+  if (response.status === 401) {
+    onError(new Error('Unauthorized: token expired'));
     return;
   }
 
+  if (!response.ok) {
+    const detail = await response.json().catch(() => null);
+    const message = detail?.error ?? `API error: ${response.status}`;
+    onError(new Error(message));
+    return;
+  }
+
+  // ── IMAGE MODEL ──────────────────────────────────────────────
   if (isImageModel) {
     try {
       const data = await response.json();
-      console.log('[image model response]', data);
+      const text = extractContent(data.choices?.[0]?.message?.content);
+      const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
-      let text = extractContent(data.choices?.[0]?.message.images[0].image_url.url);
-
-      // Формат DALL-E: { data: [{ url: '...' }] }
-      if (!text && Array.isArray(data.data)) {
-        text = data.data
-          .map((item: { url?: string; b64_json?: string }) => {
-            if (item.url) return urlToMarkdown(item.url);
-            if (item.b64_json) return urlToMarkdown(`data:image/png;base64,${item.b64_json}`);
-            return '';
-          })
-          .filter(Boolean)
-          .join('\n\n');
-      }
-
+      if (imageUrl && onImage) onImage(imageUrl, text);
       if (text) onChunk(text);
     } catch {
       onError(new Error('Failed to parse image response'));
@@ -153,6 +143,7 @@ export async function streamChat(
     return;
   }
 
+  // ── STREAMING ────────────────────────────────────────────────
   if (!response.body) {
     onError(new Error('No response body'));
     return;
@@ -167,28 +158,32 @@ export async function streamChat(
       if (done) break;
 
       const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split('\n');
 
-      for (const line of lines) {
+      for (const line of chunk.split('\n')) {
         if (!line.startsWith('data: ')) continue;
         const data = line.slice(6).trim();
-        if (data === '[DONE]') {
-          onDone();
-          return;
-        }
+        if (data === '[DONE]') { onDone(); return; }
+
         try {
           const parsed = JSON.parse(data);
+
+          // Ошибка внутри стрима (бэкенд прислал {"error":...})
+          if (parsed.error) {
+            onError(new Error(parsed.error));
+            return;
+          }
+
           const delta = parsed.choices?.[0]?.delta?.content;
           if (typeof delta === 'string') {
             onChunk(delta);
           } else if (Array.isArray(delta)) {
             for (const part of delta) {
               if (part.type === 'text') onChunk(part.text);
-              else if (part.type === 'image_url') onChunk(`![](<${part.image_url.url}>)`);
+              else if (part.type === 'image_url' && onImage) onImage(part.image_url.url, part.content);
             }
           }
         } catch {
-          // ignore malformed JSON lines
+          // игнорируем невалидный JSON
         }
       }
     }

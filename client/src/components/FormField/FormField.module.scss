@@ -1,0 +1,90 @@
+.group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    animation: fieldIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+
+    &:nth-child(1) {
+        animation-delay: 0.05s;
+    }
+
+    &:nth-child(2) {
+        animation-delay: 0.10s;
+    }
+
+    &:nth-child(3) {
+        animation-delay: 0.15s;
+    }
+}
+
+@keyframes fieldIn {
+    from {
+        opacity: 0;
+        transform: translateX(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.labelRight {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.hint {
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    font-weight: 400;
+    color: var(--text-secondary);
+    opacity: 0.6;
+    text-transform: none;
+}
+
+.badge {
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: none;
+}
+
+.error {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--error);
+    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    animation: errIn 0.2s ease both;
+}
+
+@keyframes errIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

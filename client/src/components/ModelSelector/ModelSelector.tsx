@@ -98,7 +98,7 @@ export default function ModelSelector({ chatId, currentModel }: Props) {
                 key={model.id}
                 className={`model-selector__item ${model.id === currentModel ? 'model-selector__item--active' : ''}`}
                 onClick={() => {
-                  setModel(chatId, model.id);
+                  setModel(chatId, model.id, model.name);
                   setIsOpen(false);
                 }}
               >

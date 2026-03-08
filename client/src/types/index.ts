@@ -1,3 +1,12 @@
+import { ChatResponse } from "../api/chats";
+
+export interface User {
+  id: string;
+  email: string;
+  balance: string;
+  createdAt: string;
+}
+
 export interface Attachment {
   id: string;
   name: string;
@@ -13,31 +22,13 @@ export interface Message {
   role: 'user' | 'assistant';
   name: string;
   content: string;
+  image?: string;
   modelId?: string;
+  modelName?: string;
   attachments?: Attachment[];
   createdAt: Date;
 }
 
-export interface Chat {
-  id: string;
-  title: string;
-  model: string;
-  modelName: string;
+export interface Chat extends ChatResponse {
   messages: Message[];
-  createdAt: Date;
-}
-
-export interface OpenRouterModel {
-  id: string;
-  name: string;
-  context_length?: number;
-  pricing?: {
-    prompt: string;
-    completion: string;
-  };
-  architecture?: {
-    input_modalities?: string[];
-    output_modalities?: string[];
-  };
-  supported_parameters?: string[];
 }

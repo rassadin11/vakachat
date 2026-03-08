@@ -1,0 +1,114 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  name          String
+  emailVerified Boolean  @default(false)
+  balance       Decimal  @default(0) @db.Decimal(10, 6) // 6 знаков после запятой для центов
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  chats                   Chat[]
+  transactions            Transaction[]
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
+  refreshTokens           RefreshToken[]
+}
+
+model Chat {
+  id           String    @id @default(cuid())
+  userId       String
+  title        String    @default("New Chat")
+  systemPrompt String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime? // soft delete
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@index([userId, deletedAt]) // для быстрой выборки активных чатов
+}
+
+model Message {
+  id           String   @id @default(cuid())
+  chatId       String
+  role         String // "user" | "assistant" | "system"
+  content      String
+  model        String? // "anthropic/claude-3.5-sonnet" — только для assistant
+  inputTokens  Int?
+  outputTokens Int?
+  cost         Decimal? @db.Decimal(10, 6)
+  createdAt    DateTime @default(now())
+  order        Int
+
+  chat         Chat          @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([chatId, order])
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String // "topup" | "usage" | "refund" | "bonus"
+  amount      Decimal  @db.Decimal(10, 6) // отрицательное для списаний
+  description String
+  messageId   String? // связь с сообщением, если это usage
+  createdAt   DateTime @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message Message? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+}

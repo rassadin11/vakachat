@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import type { Chat, Message, OpenRouterModel } from '../types';
-import { fetchModels as apiFetchModels, streamChat, buildApiContent, type StreamOptions } from '../api/openrouter';
+import type { Chat, Message, User } from '../types';
+import { fetchModels as apiFetchModels, streamChat, type StreamOptions } from '../api/openrouter';
 import type { Attachment } from '../types';
+import { chatApi } from '../api/chats';
 
 const DEFAULT_MODEL = 'anthropic/claude-sonnet-4-5';
 
@@ -25,14 +26,18 @@ function generateTitle(content: string): string {
 }
 
 interface ChatStore {
+  user: User | null;
   chats: Chat[];
-  activeChatId: string | null;
-  models: OpenRouterModel[];
+  activeChat: Chat | null;
+  models: any[];
   isLoadingModels: boolean;
   isStreaming: boolean;
+  activeModel: { id: string, name: string };
   abortController: AbortController | null;
 
-  createChat: () => void;
+  setUser: (data: User) => void;
+  setChats: (chats: Chat[]) => void;
+  createChat: (message: string, systemPrompt: string) => Promise<Chat>;
   deleteChat: (id: string) => void;
   setActiveChat: (id: string) => void;
   setModel: (chatId: string, modelId: string, modelName: string) => void;
@@ -43,51 +48,55 @@ interface ChatStore {
 }
 
 export const useChatStore = create<ChatStore>((set, get) => ({
+  user: null,
   chats: [],
-  activeChatId: null,
+  activeChat: null,
   models: [],
   isLoadingModels: false,
   isStreaming: false,
   abortController: null,
+  activeModel: { id: DEFAULT_MODEL, name: DEFAULT_MODEL },
 
-  createChat: () => {
-    const { models } = get();
-    const preferred = models.find((m) => m.id === DEFAULT_MODEL);
-    const topLlm = models.find((m) => {
-      const out = m.architecture?.output_modalities;
-      return !out || out.every((mod) => mod === 'text');
-    });
-    const defaultModel = preferred ?? topLlm ?? models[0];
-    const newChat: Chat = {
-      id: generateId(),
-      title: 'Новый чат',
-      model: defaultModel?.id ?? DEFAULT_MODEL,
-      modelName: defaultModel?.name ?? DEFAULT_MODEL,
-      messages: [],
-      createdAt: new Date(),
-    };
+  setUser: (user: User) => {
+    set(() => ({
+      user
+    }))
+  },
+
+  createChat: async (message, systemPrompt = '') => {
+    const newChat = await chatApi.newChat({ title: message, systemPrompt }).then(res => res);
+
     set((state) => ({
-      chats: [newChat, ...state.chats],
-      activeChatId: newChat.id,
+      chats: [{ ...newChat, messages: [] }, ...state.chats],
+      activeChat: { ...newChat, messages: [] },
     }));
+
+    return { ...newChat, messages: [] }
   },
 
   deleteChat: (id) => {
     set((state) => {
       const remaining = state.chats.filter((c) => c.id !== id);
       const newActiveId =
-        state.activeChatId === id ? (remaining[0]?.id ?? null) : state.activeChatId;
+        state.activeChat?.id === id ? (remaining[0]?.id ?? null) : state.activeChat?.id;
       return { chats: remaining, activeChatId: newActiveId };
     });
   },
 
-  setActiveChat: (id) => {
-    set({ activeChatId: id });
+  setActiveChat: async (id) => {
+    const data = await chatApi.getChat(id).then(res => res);
+    set({ activeChat: data });
   },
 
-  setModel: (chatId, modelId, modelName) => {
-    set((state) => ({
-      chats: state.chats.map((c) => (c.id === chatId ? { ...c, model: modelId, modelName } : c)),
+  setChats: (chats: Chat[]) => {
+    set(() => ({
+      chats,
+    }));
+  },
+
+  setModel: (modelId, modelName) => {
+    set(() => ({
+      activeModel: { id: modelId, name: modelName },
     }));
   },
 
@@ -98,11 +107,18 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   },
 
   sendMessage: async (content, options, attachments) => {
-    const { activeChatId, chats, isStreaming } = get();
-    if (!activeChatId || isStreaming) return;
+    const { activeChat, isStreaming, activeModel } = get();
+    if (isStreaming) return;
 
-    const activeChat = chats.find((c) => c.id === activeChatId);
-    if (!activeChat) return;
+    if (!activeChat) {
+      const { createChat } = get()
+      const data = await createChat(content, options?.systemPrompt ?? '');
+
+      console.log(data)
+      // set({ activeChat: data })
+    }
+
+    if (activeChat === null) return;
 
     const userMessage: Message = {
       id: generateId(),
@@ -117,8 +133,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     const assistantMessage: Message = {
       id: assistantMessageId,
       role: 'assistant',
-      name: activeChat.modelName,
-      modelId: activeChat.model,
+      name: activeModel.name,
+      modelId: activeModel.id,
       content: '',
       createdAt: new Date(),
     };
@@ -128,7 +144,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     set((state) => ({
       isStreaming: true,
       chats: state.chats.map((c) =>
-        c.id === activeChatId
+        c.id === activeChat.id
           ? {
             ...c,
             title: isFirstMessage ? generateTitle(content) : c.title,
@@ -138,29 +154,25 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       ),
     }));
 
-    const messagesForApi = [
-      ...activeChat.messages.map((m) => ({ role: m.role, content: buildApiContent(m.content, m.attachments) })),
-      { role: 'user', content: buildApiContent(content, attachments) },
-    ];
-
-    const modelMeta = get().models.find((m) => m.id === activeChat.model);
+    const modelMeta = get().models.find((m) => m.id === activeModel.id);
     const isImageModel = modelMeta?.architecture?.output_modalities?.includes('image') ?? false;
 
     const controller = new AbortController();
     set({ abortController: controller });
 
     await streamChat(
-      messagesForApi,
-      activeChat.model,
+      content,
+      activeChat.id,
+      activeModel.id,
       (chunk) => {
         set((state) => ({
           chats: state.chats.map((c) =>
-            c.id === activeChatId
+            c.id === activeChat.id
               ? {
                 ...c,
                 messages: c.messages.map((m) =>
                   m.id === assistantMessageId
-                    ? { ...m, content: m.content + chunk, name: activeChat.modelName }
+                    ? { ...m, content: m.content + chunk, name: activeModel.name }
                     : m,
                 ),
               }
@@ -177,12 +189,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           isStreaming: false,
           abortController: null,
           chats: state.chats.map((c) =>
-            c.id === activeChatId
+            c.id === activeChat.id
               ? {
                 ...c,
                 messages: c.messages.map((m) =>
                   m.id === assistantMessageId && m.content === ''
-                    ? { ...m, content: 'Ошибка: не удалось получить ответ.', name: activeChat.modelName }
+                    ? { ...m, content: 'Ошибка: не удалось получить ответ.', name: activeModel.name }
                     : m,
                 ),
               }
@@ -192,11 +204,25 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       },
       { ...options, imageModel: isImageModel },
       controller.signal,
+      (imageUrl, content) => {
+        set((state) => ({
+          chats: state.chats.map((c) =>
+            c.id === activeChat.id
+              ? {
+                ...c,
+                messages: c.messages.map((m) =>
+                  m.id === assistantMessageId ? { ...m, image: imageUrl, content } : m,
+                ),
+              }
+              : c,
+          ),
+        }));
+      },
     );
   },
 
   editMessage: async (chatId, messageId, newContent) => {
-    const { chats, isStreaming } = get();
+    const { chats, isStreaming, activeModel } = get();
     if (isStreaming) return;
 
     const chat = chats.find((c) => c.id === chatId);
@@ -209,8 +235,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     const assistantMessage: Message = {
       id: assistantMessageId,
       role: 'assistant',
-      name: chat.modelName,
-      modelId: chat.model,
+      name: activeModel.name,
+      modelId: activeModel.id,
       content: '',
       createdAt: new Date(),
     };
@@ -229,60 +255,70 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       ),
     }));
 
-    const messagesForApi = updatedMessages
-      .slice(0, -1)
-      .map((m) => ({ role: m.role, content: buildApiContent(m.content, m.attachments) }));
-
-    const modelMeta = get().models.find((m) => m.id === chat.model);
+    const modelMeta = get().models.find((m) => m.id === activeModel.id);
     const isImageModel = modelMeta?.architecture?.output_modalities?.includes('image') ?? false;
 
     const controller = new AbortController();
     set({ abortController: controller });
 
-    await streamChat(
-      messagesForApi,
-      chat.model,
-      (chunk) => {
-        set((state) => ({
-          chats: state.chats.map((c) =>
-            c.id === chatId
-              ? {
-                ...c,
-                messages: c.messages.map((m) =>
-                  m.id === assistantMessageId
-                    ? { ...m, content: m.content + chunk }
-                    : m,
-                ),
-              }
-              : c,
-          ),
-        }));
-      },
-      () => {
-        set({ isStreaming: false, abortController: null });
-      },
-      (error) => {
-        console.error('Edit stream error:', error);
-        set((state) => ({
-          isStreaming: false,
-          abortController: null,
-          chats: state.chats.map((c) =>
-            c.id === chatId
-              ? {
-                ...c,
-                messages: c.messages.map((m) =>
-                  m.id === assistantMessageId && m.content === ''
-                    ? { ...m, content: 'Ошибка: не удалось получить ответ.' }
-                    : m,
-                ),
-              }
-              : c,
-          ),
-        }));
-      },
-      { ...options, imageModel: isImageModel },
-      controller.signal,
-    );
+    // await streamChat(
+    //   messagesForApi,
+    //   chat.model,
+    //   (chunk) => {
+    //     set((state) => ({
+    //       chats: state.chats.map((c) =>
+    //         c.id === chatId
+    //           ? {
+    //             ...c,
+    //             messages: c.messages.map((m) =>
+    //               m.id === assistantMessageId
+    //                 ? { ...m, content: m.content + chunk }
+    //                 : m,
+    //             ),
+    //           }
+    //           : c,
+    //       ),
+    //     }));
+    //   },
+    //   () => {
+    //     set({ isStreaming: false, abortController: null });
+    //   },
+    //   (error) => {
+    //     console.error('Edit stream error:', error);
+    //     set((state) => ({
+    //       isStreaming: false,
+    //       abortController: null,
+    //       chats: state.chats.map((c) =>
+    //         c.id === chatId
+    //           ? {
+    //             ...c,
+    //             messages: c.messages.map((m) =>
+    //               m.id === assistantMessageId && m.content === ''
+    //                 ? { ...m, content: 'Ошибка: не удалось получить ответ.' }
+    //                 : m,
+    //             ),
+    //           }
+    //           : c,
+    //       ),
+    //     }));
+    //   },
+    //   { ...options, imageModel: isImageModel },
+    //   controller.signal,
+    //   (imageUrl) => {
+    //     set((state) => ({
+    //       chats: state.chats.map((c) =>
+    //         c.id === chatId
+    //           ? {
+    //             ...c,
+    //             messages: c.messages.map((m) =>
+    //               m.id === assistantMessageId ? { ...m, image: imageUrl } : m,
+    //             ),
+    //           }
+    //           : c,
+    //       ),
+    //     }));
+    //   },
+    // );
   },
 
   fetchModels: async () => {

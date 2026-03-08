@@ -101,6 +101,21 @@
     }
   }
 
+  &__generated-img {
+    display: block;
+    max-width: 100%;
+    max-height: 512px;
+    width: auto;
+    height: auto;
+    border-radius: 12px;
+    border: 1px solid #333;
+    cursor: zoom-in;
+    margin-bottom: 12px;
+    transition: opacity 0.15s;
+
+    &:hover { opacity: 0.9; }
+  }
+
   &__edit-btn {
     position: absolute;
     top: 0;
@@ -223,3 +238,59 @@
   }
 }
 
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: lightbox-in 0.15s ease;
+
+  &__img {
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    width: auto;
+    height: auto;
+    border-radius: 10px;
+    box-shadow: 0 8px 48px rgba(0, 0, 0, 0.6);
+    object-fit: contain;
+    cursor: default;
+  }
+
+  &__close,
+  &__download {
+    position: fixed;
+    top: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #fff;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.16);
+    }
+  }
+
+  &__close {
+    right: 16px;
+  }
+
+  &__download {
+    right: 64px;
+  }
+}
+
+@keyframes lightbox-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

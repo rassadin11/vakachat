@@ -78,21 +78,21 @@ function ModelCard({ model, isActive, activeChatId, setModel, handleClose }: Mod
       {(reasoning || vision) && (
         <div className="model-card__badges">
           {reasoning && (
-            <span className="model-card__badge model-card__badge--reasoning" title="Reasoning — модель рассуждает перед ответом">
+            <span className="model-card__badge model-card__badge--reasoning" title="Думает — модель рассуждает перед ответом">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-1.14Z" />
                 <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-1.14Z" />
               </svg>
-              Reasoning
+              Думает
             </span>
           )}
           {vision && (
-            <span className="model-card__badge model-card__badge--vision" title="Vision — принимает изображения на вход">
+            <span className="model-card__badge model-card__badge--vision" title="Изображения — принимает изображения на вход">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
                 <circle cx="12" cy="12" r="3" />
               </svg>
-              Vision
+              Изображения
             </span>
           )}
         </div>

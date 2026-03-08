@@ -6,7 +6,7 @@ import { ProviderLogo } from '../ModelModal/ProviderLogo';
 import ModelModal from '../ModelModal/ModelModal';
 import './MessageInput.scss';
 
-type ModeId = 'fast' | 'deep' | 'search' | 'creative';
+type ModeId = 'fast' | 'deep' | 'search' | 'critic' | 'tutor';
 
 interface Mode {
   id: ModeId;
@@ -43,11 +43,18 @@ const MODES: Mode[] = [
     plugin: 'web',
   },
   {
-    id: 'creative',
-    label: 'Творчески',
-    title: 'Нестандартные идеи и оригинальный взгляд',
-    icon: '✨',
-    systemPrompt: 'Be creative and original. Think outside the box, offer unique perspectives and imaginative ideas.',
+    id: 'critic',
+    label: 'Критик',
+    title: 'Найди слабые места и разрушь идею',
+    icon: '🔥',
+    systemPrompt: 'Act as a ruthless critic and devil\'s advocate. Your job is to find flaws, edge cases, logical gaps, and weak assumptions in any idea or plan. Be direct and harsh. Do not soften feedback. End with what would make the idea actually solid.',
+  },
+  {
+    id: 'tutor',
+    label: 'Объясни',
+    title: 'Объяснение через примеры и аналогии',
+    icon: '🎓',
+    systemPrompt: 'You are a patient tutor. Explain concepts using simple analogies and real-world examples. Check understanding by asking clarifying questions. Avoid jargon unless you define it first. Adapt complexity to what the user seems to know.',
   },
 ];
 
@@ -97,6 +104,15 @@ async function processFile(file: File, allowImages: boolean): Promise<Attachment
   });
 }
 
+const FORMAT_PROMPT = `
+Format rules (always follow):
+- Math formulas: inline with $formula$, block with $$formula$$
+- Code: always use fenced blocks with language tag
+- Lists: markdown only, no unicode bullets
+- No HTML tags in output
+- Paragraphs: separated by blank line
+`
+
 function buildOptions(activeModes: Set<ModeId>): StreamOptions | undefined {
   const prompts: string[] = [];
   const plugins: string[] = [];
@@ -106,11 +122,14 @@ function buildOptions(activeModes: Set<ModeId>): StreamOptions | undefined {
     if (mode.plugin) plugins.push(mode.plugin);
   }
   if (prompts.length === 0 && plugins.length === 0) return undefined;
+  prompts.unshift(FORMAT_PROMPT);
   return {
     ...(prompts.length > 0 ? { systemPrompt: prompts.join(' ') } : {}),
     ...(plugins.length > 0 ? { plugins } : {}),
   };
 }
+
+const MAX_ROWS = 5;
 
 export default function MessageInput() {
   const [value, setValue] = useState('');
@@ -123,12 +142,12 @@ export default function MessageInput() {
   const stopStreaming = useChatStore((s) => s.stopStreaming);
   const isStreaming = useChatStore((s) => s.isStreaming);
   const models = useChatStore((s) => s.models);
-  const activeChat = useChatStore((s) => s.chats.find((c) => c.id === s.activeChatId));
+  const activeChat = useChatStore((s) => s.chats.find((c) => c.id === s.activeChat?.id));
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const currentModelId = activeChat?.model ?? '';
+  const currentModelId = activeChat?.messages[activeChat?.messages.length - 1]?.modelId ?? '';
   const currentModel = models.find((m) => m.id === currentModelId);
   const currentModelName = currentModel?.name ?? currentModelId;
   const canAttachImages = currentModel?.architecture?.input_modalities?.includes('image') ?? false;
@@ -169,7 +188,10 @@ export default function MessageInput() {
     if (!trimmed && attachments.length === 0) return;
     setValue('');
     setAttachments([]);
-    if (textareaRef.current) textareaRef.current.style.height = 'auto';
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.overflowY = 'hidden';
+    }
     await sendMessage(trimmed, buildOptions(activeModes), attachments);
   }, [value, isStreaming, sendMessage, stopStreaming, activeModes, attachments]);
 
@@ -180,8 +202,14 @@ export default function MessageInput() {
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setValue(e.target.value);
     const el = e.target;
-    el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+    el.style.height = 'fit-content'
+
+    const { lineHeight, paddingTop, paddingBottom } = getComputedStyle(el);
+    const maxHeight = MAX_ROWS * parseFloat(lineHeight) + parseFloat(paddingTop) + parseFloat(paddingBottom);
+
+    const scrollH = el.scrollHeight;
+    el.style.maxHeight = maxHeight + 'px';
+    el.style.overflowY = scrollH > maxHeight ? 'auto' : 'hidden';
   };
 
   const handlePaste = useCallback(async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
@@ -271,7 +299,6 @@ export default function MessageInput() {
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
             disabled={isStreaming}
-            rows={1}
           />
 
           <div className="message-input__modes">
@@ -334,7 +361,7 @@ export default function MessageInput() {
         </div>
 
         <p className="message-input__hint">
-          VakaChat использует OpenRouter — ответы генерирует выбранная модель
+          vakachat — выбирайте модель и пользуйтесь всеми её возможностями
         </p>
       </div>
 

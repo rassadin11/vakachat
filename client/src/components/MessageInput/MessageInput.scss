@@ -112,8 +112,7 @@
     line-height: 1.6;
     font-family: inherit;
     min-height: 26px;
-    max-height: 160px;
-    overflow-y: auto;
+    overflow-y: hidden;
     padding: 14px 14px 6px;
 
     &::placeholder {
