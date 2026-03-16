@@ -9,7 +9,6 @@ import { authApi } from './api/auth';
 import { setAccessToken, getAccessToken } from './api/client';
 import './App.scss'
 import { useChatStore } from './store/chatStore';
-import Profile from './pages/ProfilePage/Profile';
 import StartPage from './pages/StartPage/StartPage';
 import NotFoundChat from './pages/NotFoundChat/NotFoundChat';
 
