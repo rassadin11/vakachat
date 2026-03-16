@@ -3,8 +3,8 @@ import { prisma } from '../src/prisma.js';
 const promoCodes = [
     {
         code: 'LECLERC',
-        maxUses: 3,
-        bonus: 50.00,
+        maxUses: 21,
+        bonus: 75.00,
     },
 ];
 

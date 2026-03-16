@@ -57,18 +57,28 @@ export async function register(email, password, name, promoCode) {
                 throw new Error('Промокод был только что использован последний раз');
             }
 
+            const rate = getRate(); // 90 RUB/USD
+            const rateWithMarkup = rate * 1.3; // 117 RUB/USD
+            const amountUSD = promo.bonus / rateWithMarkup;
+
+            // Создаем транзакцию
             await tx.transaction.create({
                 data: {
                     userId: newUser.id,
                     type: 'bonus',
                     amount: promo.bonus,
+                    amountUSD: amountUSD, // Добавьте это поле в схему, если нужно
                     description: `Промокод ${promo.code}`,
                 },
             });
 
+            // Обновляем баланс (RUB и USD)
             await tx.user.update({
                 where: { id: newUser.id },
-                data: { balance: { increment: promo.bonus } },
+                data: {
+                    balance: { increment: promo.bonus },
+                    balanceUSD: { increment: amountUSD },
+                },
             });
         }
 
