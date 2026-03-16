@@ -353,6 +353,7 @@
   &__img {
     max-width: calc(100vw - 48px);
     max-height: calc(100vh - 48px);
+    max-height: calc(100dvh - 48px);
     width: auto;
     height: auto;
     border-radius: 10px;

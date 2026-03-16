@@ -6,6 +6,7 @@
     background-color: var(--bg-chat-area);
     background-image: radial-gradient(ellipse 80% 60% at 50% 40%, var(--bg-chat-area-gradient) 0%, transparent 70%);
     min-height: 100vh;
+    min-height: 100dvh;
 
     &__content {
         display: flex;
