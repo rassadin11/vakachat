@@ -66,7 +66,7 @@ interface StreamChatCallbacks {
   onSync?: (userMessageId: string, balance: number, balanceUSD: number) => void;
 }
 
-const API_BASE = 'http://localhost:3000/api';
+export const API_BASE = 'http://198.13.188.156/api';
 
 // ── Helpers ──────────────────────────────────────────────────
 
