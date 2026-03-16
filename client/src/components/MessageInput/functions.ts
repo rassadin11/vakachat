@@ -1,6 +1,7 @@
 import { StreamOptions } from "../../api/openrouter";
 import { Attachment } from "../../types";
 import { ModeId, MODES } from "../../utils/modes";
+import { v4 as uuidv4 } from 'uuid';
 
 const DOCUMENT_TYPES = [
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
@@ -28,7 +29,7 @@ export async function processFile(file: File, allowImages: boolean, allowDocumen
     const data = await readFileAsBase64(file);
 
     return {
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         name: file.name,
         data,
         isImage,
