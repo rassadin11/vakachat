@@ -420,8 +420,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       ),
     }));
 
-    const modelMeta = get().models.find((m) => m.id === activeModel.id);
-    const isImageModel = modelMeta?.architecture?.output_modalities?.includes('image') ?? false;
+    // const modelMeta = get().models.find((m) => m.id === activeModel.id);
+    // const isImageModel = modelMeta?.architecture?.output_modalities?.includes('image') ?? false;
 
     const controller = new AbortController();
     set({ abortController: controller });

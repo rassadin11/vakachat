@@ -7,7 +7,7 @@ interface Props {
   currentModel: string;
 }
 
-export default function ModelSelector({ chatId, currentModel }: Props) {
+export default function ModelSelector({ currentModel }: Props) {
   const models = useChatStore((s) => s.models);
   const isLoadingModels = useChatStore((s) => s.isLoadingModels);
   const setModel = useChatStore((s) => s.setModel);

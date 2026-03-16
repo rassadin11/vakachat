@@ -101,7 +101,7 @@ export default function Sidebar() {
           <div className="sidebar__user-info">
             <span className="sidebar__user-name">{user && user.email}</span>
             <span className="sidebar__user-tokens">
-              {user && parseFloat(user.balance).toFixed(2)} ₽
+              {user && parseFloat(String(user.balance)).toFixed(2)} ₽
             </span>
           </div>
         </Link>
