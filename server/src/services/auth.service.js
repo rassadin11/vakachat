@@ -68,8 +68,7 @@ export async function register(email, password, name, promoCode) {
                 data: {
                     userId: newUser.id,
                     type: 'bonus',
-                    amount: promo.bonus,
-                    amountUSD: amountUSD, // Добавьте это поле в схему, если нужно
+                    amount: promo.bonus, // Добавьте это поле в схему, если нужно
                     description: `Промокод ${promo.code}`,
                 },
             });
