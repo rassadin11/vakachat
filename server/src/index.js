@@ -6,11 +6,9 @@ import chatRoutes from './routes/chat.routes.js';
 import rateLimit from 'express-rate-limit';
 import cors from 'cors';
 import { getModels } from './routes/models.js';
-import { initCurrencyRate, getRate, topUpBalance } from './constants/constants.js';
+import { initCurrencyRate, getRate } from './constants/constants.js';
 
 await initCurrencyRate();
-
-topUpBalance('cmmgl9c6600006scric69x1ed', 1)
 
 const authLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
@@ -21,7 +19,7 @@ const authLimiter = rateLimit({
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: process.env.CLIENT_URL || 'http://localhost:5173',
   credentials: true,
 }));
 app.use(express.json({ limit: "25mb" }));
@@ -41,7 +39,7 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = Number(process.env.PORT) || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Сервер запущен на порту ${PORT}`);
 });
 

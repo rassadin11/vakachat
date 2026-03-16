@@ -146,6 +146,10 @@ export async function createMessage(req, res) {
         return res.status(400).json({ error: 'Недостаточно средств для генерации изображения. Необходимо иметь на балансе больше 10 руб.' });
     }
 
+    if (user.balance < 100 && model.includes('research')) {
+        return res.status(400).json({ error: 'Недостаточно средств для исследования. Необходимо иметь на балансе больше 100 руб.' });
+    }
+
     const chat = await chatService.getChat(chatId, userId);
     if (!chat) {
         return res.status(403).json({ error: 'Chat not found or access denied' });

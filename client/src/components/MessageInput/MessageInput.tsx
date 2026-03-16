@@ -134,14 +134,33 @@ export default function MessageInput() {
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setValue(e.target.value);
     const el = e.target;
-    el.style.height = 'fit-content'
 
-    const { lineHeight, paddingTop, paddingBottom } = getComputedStyle(el);
-    const maxHeight = MAX_ROWS * parseFloat(lineHeight) + parseFloat(paddingTop) + parseFloat(paddingBottom);
+    el.style.height = '0';  // ← именно 0, не auto
+
+    if (!el.dataset.lineH) {
+      const v = el.value;
+      el.value = 'x';
+      const h1 = el.scrollHeight;
+      el.value = 'x\nx';
+      const h2 = el.scrollHeight;
+      el.value = v;
+      el.dataset.lineH = String(h2 - h1);
+      el.dataset.baseH = String(h1);
+    }
+
+    const lineH = Number(el.dataset.lineH);
+    const baseH = Number(el.dataset.baseH);
+    const maxH = baseH + lineH * (MAX_ROWS - 1);
 
     const scrollH = el.scrollHeight;
-    el.style.maxHeight = maxHeight + 'px';
-    el.style.overflowY = scrollH > maxHeight ? 'auto' : 'hidden';
+
+    if (scrollH > maxH) {
+      el.style.height = `${maxH}px`;
+      el.style.overflowY = 'auto';
+    } else {
+      el.style.height = `${scrollH}px`;
+      el.style.overflowY = 'hidden';
+    }
   };
 
   const handlePaste = useCallback(async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
@@ -283,6 +302,7 @@ export default function MessageInput() {
             className="message-input__textarea"
             placeholder="Сообщение... (Enter — отправить, Shift+Enter — новая строка)"
             value={value}
+            rows={1}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
