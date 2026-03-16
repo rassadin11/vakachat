@@ -185,6 +185,25 @@
       .sidebar__item-icon {
         color: var(--text-primary);
       }
+
+      @media (max-width: 768px) {
+        background: var(--accent-dim);
+        box-shadow: inset 3px 0 0 0 var(--accent);
+
+        .sidebar__item-title {
+          color: var(--text-primary);
+          text-decoration: none;
+        }
+
+        .sidebar__item-icon {
+          color: var(--accent);
+        }
+
+        // Убираем delete при active hover — чтобы не мешала
+        &:hover {
+          background: var(--accent-dim);
+        }
+      }
     }
 
     &--active {
@@ -248,6 +267,10 @@
 
     &:active {
       transform: scale(0.9);
+    }
+
+    @media (max-width: 768px) {
+      opacity: 1;
     }
   }
 

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useChatStore } from '../../store/chatStore';
 import './Sidebar.scss';
 import { chatApi } from '../../api/chats';
@@ -9,6 +9,8 @@ import { FORMAT_PROMPT } from '../../utils/system-settings';
 
 export default function Sidebar() {
   const navigate = useNavigate();
+
+  const [isLoading, setIsLoading] = useState(false)
 
   const chats = useChatStore((s) => s.chats);
   const setChats = useChatStore((s) => s.setChats);
@@ -27,14 +29,34 @@ export default function Sidebar() {
   }, [])
 
   const handleCreateChat = async () => {
-    await chatApi.newChat({
-      title: "Новый чат",
-      systemPrompt: FORMAT_PROMPT
-    }).then(chat => {
-      setChats([...chats, { ...chat, messages: [] }]);
-      navigate(`/chats/${chat.id}`);
-    });
+    setIsLoading(true)
+
+    try {
+      await chatApi.newChat({
+        title: "Новый чат",
+        systemPrompt: FORMAT_PROMPT
+      }).then(chat => {
+        setChats([...chats, { ...chat, messages: [] }]);
+        navigate(`/chats/${chat.id}`);
+
+        if (window.innerWidth < 768) {
+          toggleSidebar();
+        }
+      });
+
+      setIsLoading(false)
+    } catch (e) {
+      console.error("Failed to create chat:", e);
+      setIsLoading(false)
+    }
+
   };
+
+  const handleChatClick = () => {
+    if (window.innerWidth < 768) {
+      toggleSidebar();
+    }
+  }
 
   return (
     <aside className={`sidebar ${!sidebarOpen ? 'sidebar--collapsed' : 'sidebar--open'}`}>
@@ -64,6 +86,7 @@ export default function Sidebar() {
               to={`/chats/${chat.id}`}
               key={chat.id}
               className={`sidebar__item ${activeChat?.id === chat.id ? 'sidebar__item--active' : ''}`}
+              onClick={handleChatClick}
             >
               <svg className="sidebar__item-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -88,7 +111,7 @@ export default function Sidebar() {
         </div>
 
         <div className="sidebar__new-chat">
-          <button onClick={handleCreateChat} className="sidebar__new-chat-btn">
+          <button onClick={handleCreateChat} className="sidebar__new-chat-btn" disabled={isLoading}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M12 5v14M5 12h14" />
             </svg>

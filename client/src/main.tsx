@@ -87,10 +87,10 @@ const router = createBrowserRouter([
           { path: "/chats/not-found", element: <ProtectedRoute><NotFoundChat /></ProtectedRoute> }
         ],
       },
-      {
-        path: "/profile",            // ← без Sidebar
-        element: <ProtectedRoute><Profile /></ProtectedRoute>
-      },
+      // {
+      //   path: "/profile",            // ← без Sidebar
+      //   element: <ProtectedRoute><Profile /></ProtectedRoute>
+      // },
     ],
   },
   { path: "/login", element: <AuthPage /> },
