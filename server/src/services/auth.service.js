@@ -9,6 +9,7 @@ import {
     verifyRefreshToken,
 } from '../utils/jwt.utils.js';
 import { FieldError } from '../errors/errors.js';
+import { getRate } from '../constants/constants.js';
 
 const BCRYPT_ROUNDS = 12;
 
@@ -19,6 +20,7 @@ export async function register(email, password, name, promoCode) {
     }
 
     let promo = null;
+
     if (promoCode) {
         promo = await prisma.promoCode.findUnique({
             where: { code: promoCode.trim().toUpperCase() },
@@ -72,7 +74,6 @@ export async function register(email, password, name, promoCode) {
                 },
             });
 
-            // Обновляем баланс (RUB и USD)
             await tx.user.update({
                 where: { id: newUser.id },
                 data: {

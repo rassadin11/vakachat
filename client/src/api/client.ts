@@ -29,7 +29,7 @@ export function processQueue(error: unknown, token: string | null = null) {
 }
 
 async function request<T>(path: string, method: HttpMethod, body?: unknown): Promise<T> {
-    let res = await fetch(`http://198.13.188.156/api${path}`, {
+    let res = await fetch(`http://198.13.188.156:3000/api${path}`, {
         method,
         credentials: "include",
         headers: {
