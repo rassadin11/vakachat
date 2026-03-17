@@ -76,7 +76,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     },
     "pricing": {
       "prompt": "0.00000025",
-      "completion": "0.0000004"
+      "completion": "0.0000004",
+      "completionRUB": "0.0000416",
+      "promptRUB": "0.000026"
     },
     "supported_parameters": [
       "frequency_penalty",

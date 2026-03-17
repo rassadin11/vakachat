@@ -50,6 +50,8 @@ export interface Model {
   pricing: {
     prompt: string;
     completion: string;
+    promptRUB: string;
+    completionRUB: string;
   };
   supported_parameters: string[];
   default_parameters: {

@@ -1,4 +1,5 @@
 import { getCachedModels, setCachedModels } from "../cache/modelsCache.js";
+import { getRate } from "../constants/constants.js";
 
 const ALLOWED_PREFIXES = [
     'anthropic/',
@@ -40,7 +41,12 @@ export async function getModels(req, res) {
                 id: m.id,
                 name: m.name,
                 context_length: m.context_length,
-                pricing: m.pricing,
+                pricing: {
+                    prompt: m.pricing.prompt,
+                    completion: m.pricing.completion,
+                    promptRUB: m.pricing.prompt * getRate(),
+                    completionRUB: m.pricing.completion * getRate()
+                },
                 supported_parameters: m.supported_parameters,
                 architecture: m.architecture,
                 default_parameters: m.default_parameters,

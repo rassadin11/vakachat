@@ -4,6 +4,7 @@ import { useChatStore } from '../../store/chatStore';
 import { ProviderLogo } from './ProviderLogo';
 import './ModelModal.scss';
 import Loading from '../Loading/Loading';
+import { Model } from '../../types';
 
 interface Props {
   onClose: () => void;
@@ -12,13 +13,14 @@ interface Props {
 type SortKey = 'default' | 'input' | 'output';
 type SortDir = 'asc' | 'desc';
 
-function formatPrice(pricing?: { prompt: string; completion: string }) {
+function formatPrice(pricing?: Model["pricing"]) {
   if (!pricing) return null;
-  const inp = parseFloat(pricing.prompt) * 1_000_000;
-  const out = parseFloat(pricing.completion) * 1_000_000;
-  if (inp === 0 && out === 0) return { free: true, input: '', output: '' };
+
+  const inp = parseFloat(pricing.promptRUB) * 1_000_000;
+  const out = parseFloat(pricing.completionRUB) * 1_000_000;
+
   const fmt = (n: number) =>
-    n === 0 ? '$0' : n < 0.1 ? `$${n.toFixed(3)}` : `$${n.toFixed(2)}`;
+    n === 0 ? '$0' : n < 8 ? `$${n.toFixed(3)}` : `$${n.toFixed(2)}`;
   return { free: false, input: fmt(inp), output: fmt(out) };
 }
 
