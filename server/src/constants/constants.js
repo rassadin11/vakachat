@@ -4,7 +4,7 @@ async function fetchUsdToRub() {
     try {
         const res = await fetch('https://open.er-api.com/v6/latest/USD');
         const data = await res.json();
-        return data.rates.RUB * 1.3;
+        return data.rates.RUB * 1.21;
     } catch {
         return null;
     }
@@ -33,7 +33,7 @@ export function getRate() {
 
 export async function topUpBalance(userId, amountRub) {
     const rate = getRate(); // USD_TO_RUB без наценки, например 90
-    const rateWithMarkup = rate * 1.3; // 117 руб за доллар для пользователя
+    const rateWithMarkup = rate * 1.21; // 117 руб за доллар для пользователя
 
     const amountUSD = amountRub / rateWithMarkup;
 

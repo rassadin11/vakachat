@@ -60,7 +60,7 @@ export async function register(email, password, name, promoCode) {
             }
 
             const rate = getRate(); // 90 RUB/USD
-            const rateWithMarkup = rate * 1.3; // 117 RUB/USD
+            const rateWithMarkup = rate * 1.21; // 117 RUB/USD
             const amountUSD = promo.bonus / rateWithMarkup;
 
             // Создаем транзакцию
