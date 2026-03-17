@@ -16,8 +16,8 @@ type SortDir = 'asc' | 'desc';
 function formatPrice(pricing?: Model["pricing"]) {
   if (!pricing) return null;
 
-  const inp = parseFloat(pricing.promptRUB) * 1_000_000;
-  const out = parseFloat(pricing.completionRUB) * 1_000_000;
+  const inp = parseFloat(pricing.promptRUB) * 10_000;
+  const out = parseFloat(pricing.completionRUB) * 10_000;
 
   const fmt = (n: number) =>
     n === 0 ? '$0' : n < 8 ? `${n.toFixed(3)} ₽` : `${n.toFixed(2)} ₽`;
@@ -130,7 +130,7 @@ function ModelCard({ model, isActive, activeChatId, handleClose }: ModelCardProp
               <span className="model-card__price-arrow">↓</span>
               {price.output}
             </span>
-            <span className="model-card__price-unit">* за 1M токенов</span>
+            <span className="model-card__price-unit">* за 10K токенов</span>
           </>
         )}
       </div>
