@@ -20,7 +20,7 @@ function formatPrice(pricing?: Model["pricing"]) {
   const out = parseFloat(pricing.completionRUB) * 1_000_000;
 
   const fmt = (n: number) =>
-    n === 0 ? '$0' : n < 8 ? `$${n.toFixed(3)}` : `$${n.toFixed(2)}`;
+    n === 0 ? '$0' : n < 8 ? `${n.toFixed(3)} ₽` : `${n.toFixed(2)} ₽`;
   return { free: false, input: fmt(inp), output: fmt(out) };
 }
 
@@ -130,7 +130,7 @@ function ModelCard({ model, isActive, activeChatId, handleClose }: ModelCardProp
               <span className="model-card__price-arrow">↓</span>
               {price.output}
             </span>
-            <span className="model-card__price-unit">/M токенов</span>
+            <span className="model-card__price-unit">* за 1M токенов</span>
           </>
         )}
       </div>
