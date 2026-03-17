@@ -6,6 +6,7 @@ import { useNavigate, useParams } from "react-router";
 export const MainPage = () => {
     const { chatId } = useParams()
     const setActiveChat = useChatStore(s => s.setActiveChat)
+    const { isChatLoading } = useChatStore(s => s)
     const navigate = useNavigate()
 
     useEffect(() => {
@@ -17,7 +18,7 @@ export const MainPage = () => {
     }, [chatId])
 
     return (
-        <main className="app__main">
+        <main className={isChatLoading ? 'app__main app__main--loading' : 'app__main'}>
             <ChatArea />
         </main>
     );

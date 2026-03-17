@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useChatStore } from '../../store/chatStore';
 import './Sidebar.scss';
 import { chatApi } from '../../api/chats';
@@ -10,8 +10,6 @@ import { FORMAT_PROMPT } from '../../utils/system-settings';
 export default function Sidebar() {
   const navigate = useNavigate();
 
-  const [isLoading, setIsLoading] = useState(false)
-
   const chats = useChatStore((s) => s.chats);
   const setChats = useChatStore((s) => s.setChats);
   const deleteChat = useChatStore((s) => s.deleteChat);
@@ -19,6 +17,7 @@ export default function Sidebar() {
   const user = useChatStore(s => s.user)
   const sidebarOpen = useChatStore((s) => s.sidebarOpen);
   const toggleSidebar = useChatStore((s) => s.toggleSidebar);
+  const { isChatLoading, setIsChatLoading } = useChatStore((s) => s);
 
   useEffect(() => {
     const loadChats = async () => {
@@ -29,7 +28,7 @@ export default function Sidebar() {
   }, [])
 
   const handleCreateChat = async () => {
-    setIsLoading(true)
+    setIsChatLoading(true)
 
     try {
       await chatApi.newChat({
@@ -44,10 +43,10 @@ export default function Sidebar() {
         }
       });
 
-      setIsLoading(false)
+      setIsChatLoading(false)
     } catch (e) {
       console.error("Failed to create chat:", e);
-      setIsLoading(false)
+      setIsChatLoading(false)
     }
 
   };
@@ -111,7 +110,7 @@ export default function Sidebar() {
         </div>
 
         <div className="sidebar__new-chat">
-          <button onClick={handleCreateChat} className="sidebar__new-chat-btn" disabled={isLoading}>
+          <button onClick={handleCreateChat} className="sidebar__new-chat-btn" disabled={isChatLoading}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M12 5v14M5 12h14" />
             </svg>
@@ -119,7 +118,7 @@ export default function Sidebar() {
           </button>
         </div>
 
-        <Link to="/profile" className="sidebar__user">
+        <div className="sidebar__user">
           <div className="sidebar__user-avatar">{(user && user.email[0])?.toUpperCase() || "A"}</div>
           <div className="sidebar__user-info">
             <span className="sidebar__user-name">{user && user.email}</span>
@@ -127,7 +126,7 @@ export default function Sidebar() {
               {user && parseFloat(String(user.balance)).toFixed(2)} ₽
             </span>
           </div>
-        </Link>
+        </div>
 
         <button
           className="sidebar__logout-btn"

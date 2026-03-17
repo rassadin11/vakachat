@@ -23,6 +23,7 @@ interface ChatStore {
   activeChat: Chat | null;
   models: Model[];
   isLoadingModels: boolean;
+  isChatLoading: boolean;
   isStreaming: boolean;
   activeModel: Model;
   abortController: AbortController | null;
@@ -34,6 +35,7 @@ interface ChatStore {
   setContextLimit: (limit: number) => void;
   setIsResearch: (isResearch: boolean) => void;
   toggleSidebar: () => void;
+  setIsChatLoading: (value: boolean) => void;
   setUser: (data: User) => void;
   setChats: (chats: Chat[]) => void;
   createChat: (message: string, systemPrompt: string) => Promise<Chat>;
@@ -110,10 +112,13 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   errorMessage: '',
   contextLimit: 0,
   isResearch: false,
+  isChatLoading: false,
 
+  setIsChatLoading: (val) => set({ isChatLoading: val }),
   setContextLimit: (limit) => set({ contextLimit: limit }),
   setIsResearch: (val) => set({ isResearch: val }),
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
+
   setUser: (user: User) => {
     set(() => ({
       user
@@ -121,11 +126,13 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   },
 
   createChat: async (message, systemPrompt = '') => {
+    set(() => ({ isChatLoading: true }));
     const newChat = await chatApi.newChat({ title: message, systemPrompt }).then(res => res);
 
     set((state) => ({
       chats: [{ ...newChat, messages: [] }, ...state.chats],
       activeChat: { ...newChat, messages: [] },
+      isChatLoading: false,
     }));
 
     return { ...newChat, messages: [] }
