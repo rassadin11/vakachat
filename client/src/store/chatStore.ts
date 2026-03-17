@@ -60,8 +60,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   isStreaming: false,
   abortController: null,
   activeModel: {
-    "id": "deepseek/deepseek-v3.2",
-    "name": "DeepSeek: DeepSeek V3.2",
+    "id": "deepseek/deepseek-v3.2-speciale",
+    "name": "DeepSeek: DeepSeek V3.2 Speciale",
     "context_length": 163840,
     "architecture": {
       "modality": "text->text",
@@ -75,16 +75,15 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       "instruct_type": null
     },
     "pricing": {
-      "prompt": "0.00000025",
-      "completion": "0.0000004",
-      "completionRUB": "0.0000416",
-      "promptRUB": "0.000026"
+      "prompt": "0.0000004",
+      "completion": "0.0000012",
+      "promptRUB": "0.0000416",
+      "completionRUB": "0.001248",
     },
     "supported_parameters": [
       "frequency_penalty",
       "include_reasoning",
       "logit_bias",
-      "logprobs",
       "max_tokens",
       "min_p",
       "presence_penalty",
@@ -95,19 +94,13 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       "stop",
       "structured_outputs",
       "temperature",
-      "tool_choice",
-      "tools",
       "top_k",
-      "top_logprobs",
       "top_p"
     ],
     "default_parameters": {
       "temperature": 1,
       "top_p": 0.95,
-      "top_k": null,
-      "frequency_penalty": null,
-      "presence_penalty": null,
-      "repetition_penalty": null
+      "frequency_penalty": null
     },
   },
   sidebarOpen: true,
