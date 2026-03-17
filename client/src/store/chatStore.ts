@@ -60,47 +60,50 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   isStreaming: false,
   abortController: null,
   activeModel: {
-    "id": "deepseek/deepseek-v3.2-speciale",
-    "name": "DeepSeek: DeepSeek V3.2 Speciale",
-    "context_length": 163840,
+    "id": "google/gemini-3.1-flash-lite-preview",
+    "name": "Google: Gemini 3.1 Flash Lite Preview",
+    "context_length": 1048576,
     "architecture": {
-      "modality": "text->text",
+      "modality": "text+image+file+audio+video->text",
       "input_modalities": [
-        "text"
+        "text",
+        "image",
+        "video",
+        "file",
+        "audio"
       ],
       "output_modalities": [
         "text"
       ],
-      "tokenizer": "DeepSeek",
+      "tokenizer": "Gemini",
       "instruct_type": null
     },
     "pricing": {
-      "prompt": "0.0000004",
-      "completion": "0.0000012",
-      "promptRUB": "0.0000416",
-      "completionRUB": "0.001248",
+      "prompt": "0.00000025",
+      "completion": "0.0000015",
+      "promptRUB": "0.000026",
+      "completionRUB": "0.000156",
     },
     "supported_parameters": [
-      "frequency_penalty",
       "include_reasoning",
-      "logit_bias",
       "max_tokens",
-      "min_p",
-      "presence_penalty",
       "reasoning",
-      "repetition_penalty",
       "response_format",
       "seed",
       "stop",
       "structured_outputs",
       "temperature",
-      "top_k",
+      "tool_choice",
+      "tools",
       "top_p"
     ],
     "default_parameters": {
-      "temperature": 1,
-      "top_p": 0.95,
-      "frequency_penalty": null
+      "temperature": null,
+      "top_p": null,
+      "top_k": null,
+      "frequency_penalty": null,
+      "presence_penalty": null,
+      "repetition_penalty": null
     },
   },
   sidebarOpen: true,
