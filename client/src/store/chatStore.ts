@@ -152,10 +152,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
   setActiveChat: async (id) => {
     try {
+      set(() => ({ isChatLoading: true }));
       const data = await chatApi.getChat(id);
-      set({ activeChat: data });
+      set({ activeChat: data, isChatLoading: false });
       return true
     } catch (e) {
+      set({ isChatLoading: false });
       return false
     }
   },
@@ -207,7 +209,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   },
 
   sendMessage: async (content, options, attachments) => {
-    const { activeChat, contextLimit, isStreaming, activeModel, user } = get();
+    const { activeChat, contextLimit, isStreaming, activeModel, user, changeChatTitle } = get();
 
     if (isStreaming) return;
     if (!content.trim() && !attachments?.length) return;
@@ -257,6 +259,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         },
       };
     });
+
+    if (isFirstMessage) {
+      changeChatTitle(activeChat.id, generateTitle(content))
+    }
 
     const modelMeta = get().models.find((m) => m.id === activeModel.id);
     const isImageModel =
