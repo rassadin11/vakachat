@@ -120,7 +120,7 @@ export default function Sidebar() {
         </div>
 
         <Link to="/profile" className="sidebar__user">
-          <div className="sidebar__user-avatar">А</div>
+          <div className="sidebar__user-avatar">{(user && user.email[0])?.toUpperCase() || "A"}</div>
           <div className="sidebar__user-info">
             <span className="sidebar__user-name">{user && user.email}</span>
             <span className="sidebar__user-tokens">

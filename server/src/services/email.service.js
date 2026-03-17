@@ -54,10 +54,10 @@ export async function sendVerificationEmail(to, token) {
                     Добро пожаловать!
                   </h1>
                   <p style="margin:0 0 20px; font-size:14px; color:#888888; line-height:1.6;">
-                    Спасибо за участие в бета&#8209;тестировании! За&nbsp;подтверждение email вам будет начислено <strong style="color:#10b981;">50&nbsp;₽</strong>.
+                    Спасибо за участие в бета&#8209;тестировании! Подтверждение email пока, что необязательно.
                   </p>
                   <p style="margin:0 0 24px; font-size:14px; color:#888888; line-height:1.6;">
-                    Нажмите на кнопку ниже, чтобы подтвердить ваш&nbsp;email:
+                    Но можете нажать на кнопку ниже, чтобы подтвердить ваш&nbsp;email:
                   </p>
                 </td>
               </tr>
