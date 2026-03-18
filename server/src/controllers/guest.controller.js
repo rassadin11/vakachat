@@ -1,6 +1,6 @@
 // controllers/guest.controller.js
 
-const GUEST_ALLOWED_PREFIXES = ['deepseek/', 'thudm/'];
+const GUEST_ALLOWED_PREFIXES = ['deepseek/', 'thudm/', 'z-ai/'];
 
 function isModelAllowed(modelId) {
     return GUEST_ALLOWED_PREFIXES.some(prefix => modelId.startsWith(prefix));

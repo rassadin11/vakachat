@@ -3,6 +3,7 @@ import type { Chat, Message, Model, User } from '../types';
 import { fetchModels as apiFetchModels, fetchModels, streamChat, streamGuestChat, type StreamOptions, type ApiMessage } from '../api/openrouter';
 import type { Attachment } from '../types';
 import { chatApi } from '../api/chats';
+import { authApi } from '../api/auth';
 import { calcMaxTokens } from '../utils/calcMaxTokens';
 
 export const GUEST_ALLOWED_PREFIXES = ['deepseek/', 'thudm/', 'z-ai/'];
@@ -496,6 +497,13 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         },
       },
     );
+
+    // Обновляем баланс после завершения стриминга (включая прерывание и картинки)
+    authApi.me().then((freshUser) => {
+      set((state) => ({
+        user: state.user ? { ...state.user, balance: freshUser.balance, balanceUSD: freshUser.balanceUSD } : null,
+      }));
+    }).catch(() => {});
   },
 
   changeChatTitle: async (chatId, newTitle) => {

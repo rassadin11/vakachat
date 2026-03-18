@@ -12,6 +12,7 @@ export default function MessageList({ messages }: Props) {
   const isStreaming = useChatStore((s) => s.isStreaming);
   const { handleContextMessage } = useChatStore(s => s)
   const user = useChatStore((s) => s.user);
+  const isGuest = useChatStore((s) => s.isGuest);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
@@ -97,7 +98,7 @@ export default function MessageList({ messages }: Props) {
 
                 <div className="message__body">
                   <span className="message__role">
-                    {msg.role === 'user' ? user?.email.split('@')[0].toLowerCase() : msg.name || msg.modelName}
+                    {msg.role === 'user' ? (isGuest ? 'Гость' : user?.email.split('@')[0].toLowerCase()) : msg.name || msg.modelName}
                   </span>
 
                   {msg.attachments && msg.attachments.length > 0 && (
