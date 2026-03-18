@@ -66,7 +66,7 @@ interface StreamChatCallbacks {
   onSync?: (userMessageId: string, balance: number, balanceUSD: number) => void;
 }
 
-export const API_BASE = 'http://198.13.188.156/api';
+export const API_BASE = 'http://localhost:3000/api';
 
 // ── Helpers ──────────────────────────────────────────────────
 
@@ -124,6 +124,81 @@ function extractDelta(parsed: any, callbacks: StreamChatCallbacks) {
 }
 
 // ── Main ─────────────────────────────────────────────────────
+
+export interface GuestStreamParams {
+  messages: ApiMessage[];
+  model: string;
+  signal?: AbortSignal;
+}
+
+export async function streamGuestChat(
+  params: GuestStreamParams,
+  callbacks: Pick<StreamChatCallbacks, 'onChunk' | 'onDone' | 'onError'>,
+): Promise<void> {
+  const { messages, model, signal } = params;
+  const { onChunk, onDone, onError } = callbacks;
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE}/guest/message`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages, model }),
+      signal,
+    });
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') { onDone(); return; }
+    onError(err instanceof Error ? err : new Error('Network error'));
+    return;
+  }
+
+  if (!response.ok) {
+    const detail = await response.json().catch(() => null);
+    onError(new Error(detail?.error ?? `API error: ${response.status}`));
+    return;
+  }
+
+  if (!response.body) { onError(new Error('No response body')); return; }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+
+  signal?.addEventListener('abort', () => reader.cancel());
+
+  try {
+    let buffer = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (signal?.aborted) { await reader.cancel(); onDone(); return; }
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if (!raw || raw === '[DONE]') continue;
+
+        let parsed;
+        try { parsed = JSON.parse(raw); } catch { continue; }
+
+        if (parsed.type === 'done') { onDone(); return; }
+
+        const delta = parsed.choices?.[0]?.delta?.content;
+        if (typeof delta === 'string') onChunk(delta);
+      }
+    }
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') { onDone(); return; }
+    if (signal?.aborted) { onDone(); return; }
+    onError(err instanceof Error ? err : new Error('Stream read error'));
+    return;
+  }
+
+  onDone();
+}
 
 export async function streamChat(
   params: StreamChatParams,

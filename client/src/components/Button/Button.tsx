@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router";
 import { useChatStore } from "../../store/chatStore";
-import { chatApi } from "../../api/chats";
 import { FORMAT_PROMPT } from "../../utils/system-settings";
 
 interface IButton {
@@ -9,16 +8,11 @@ interface IButton {
 
 export const Button = ({ title }: IButton) => {
     const navigate = useNavigate();
-    const { chats, setChats } = useChatStore();
+    const createChat = useChatStore((s) => s.createChat);
 
     const handleCreateChat = async () => {
-        await chatApi.newChat({
-            title: 'Новый чат',
-            systemPrompt: FORMAT_PROMPT,
-        }).then(chat => {
-            setChats([...chats, { ...chat, messages: [] }]);
-            navigate(`/chats/${chat.id}`);
-        });
+        const chat = await createChat('Новый чат', FORMAT_PROMPT);
+        navigate(`/chats/${chat.id}`);
     };
 
     return (

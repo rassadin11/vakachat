@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useChatStore } from '../../store/chatStore';
+import { useChatStore, GUEST_ALLOWED_PREFIXES } from '../../store/chatStore';
 import { ProviderLogo } from './ProviderLogo';
 import './ModelModal.scss';
 import Loading from '../Loading/Loading';
@@ -55,9 +55,10 @@ interface ModelCardProps {
   isActive: boolean;
   activeChatId: string | null;
   handleClose: () => void;
+  locked?: boolean;
 }
 
-function ModelCard({ model, isActive, activeChatId, handleClose }: ModelCardProps) {
+function ModelCard({ model, isActive, activeChatId, handleClose, locked }: ModelCardProps) {
   const price = formatPrice(model.pricing);
   const reasoning = isReasoningModel(model);
   const vision = isVisionModel(model);
@@ -66,11 +67,13 @@ function ModelCard({ model, isActive, activeChatId, handleClose }: ModelCardProp
 
   return (
     <button
-      className={`model-card ${isActive ? 'model-card--active' : ''}`}
+      className={`model-card ${isActive ? 'model-card--active' : ''} ${locked ? 'model-card--locked' : ''}`}
       onClick={() => {
+        if (locked) return;
         if (activeChatId) setModel(model.id);
         handleClose();
       }}
+      disabled={locked}
     >
       {isActive && (
         <div className="model-card__check">
@@ -145,7 +148,14 @@ export default function ModelModal({ onClose }: Props) {
   const [isClosing, setIsClosing] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
-  const models = useChatStore((s) => s.models);
+  const allModels = useChatStore((s) => s.models);
+  const isGuest = useChatStore((s) => s.isGuest);
+  const models = isGuest
+    ? allModels.filter(m => GUEST_ALLOWED_PREFIXES.some(p => m.id.startsWith(p)))
+    : allModels;
+  const lockedModels = isGuest
+    ? allModels.filter(m => !GUEST_ALLOWED_PREFIXES.some(p => m.id.startsWith(p)))
+    : [];
   const currentModel = useChatStore((s) => s.activeModel);
   const isLoadingModels = useChatStore((s) => s.isLoadingModels);
   const activeChatId = useChatStore((s) => s.activeChat?.id);
@@ -178,6 +188,12 @@ export default function ModelModal({ onClose }: Props) {
   };
 
   const filtered = models.filter(
+    (m) =>
+      m.name.toLowerCase().includes(search.toLowerCase()) ||
+      m.id.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const filteredLocked = lockedModels.filter(
     (m) =>
       m.name.toLowerCase().includes(search.toLowerCase()) ||
       m.id.toLowerCase().includes(search.toLowerCase()),
@@ -226,7 +242,12 @@ export default function ModelModal({ onClose }: Props) {
     <div className={`model-modal-overlay ${isClosing ? 'model-modal-overlay--closing' : ''}`} onClick={handleClose}>
       <div className={`model-modal ${isClosing ? 'model-modal--closing' : ''}`} onClick={(e) => e.stopPropagation()}>
         <div className="model-modal__header">
-          <h2 className="model-modal__title">Выбор модели</h2>
+          <div className="model-modal__header-left">
+            <h2 className="model-modal__title">Выбор модели</h2>
+            {isGuest && (
+              <span className="model-modal__guest-badge">Пробный режим</span>
+            )}
+          </div>
           <button className="model-modal__close" onClick={handleClose} title="Закрыть">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M18 6L6 18M6 6l12 12" />
@@ -292,6 +313,21 @@ export default function ModelModal({ onClose }: Props) {
                 Генерация изображений
               </div>
               {imageModels.map((model) => <ModelCard key={model.id} model={model} isActive={model.id === currentModel.id} activeChatId={activeChatId ?? null} handleClose={handleClose} />)}
+            </>
+          )}
+
+          {filteredLocked.length > 0 && (
+            <>
+              <div className="model-modal__section-header model-modal__section-header--locked">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                Доступно после регистрации
+              </div>
+              {filteredLocked.map((model) => (
+                <ModelCard key={model.id} model={model} isActive={false} activeChatId={activeChatId ?? null} handleClose={handleClose} locked />
+              ))}
             </>
           )}
         </div>}

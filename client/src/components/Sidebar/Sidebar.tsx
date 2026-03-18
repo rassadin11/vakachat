@@ -13,42 +13,33 @@ export default function Sidebar() {
   const chats = useChatStore((s) => s.chats);
   const setChats = useChatStore((s) => s.setChats);
   const deleteChat = useChatStore((s) => s.deleteChat);
+  const createChat = useChatStore((s) => s.createChat);
   const activeChat = useChatStore((s) => s.activeChat);
-  const user = useChatStore(s => s.user)
+  const user = useChatStore(s => s.user);
+  const isGuest = useChatStore(s => s.isGuest);
   const sidebarOpen = useChatStore((s) => s.sidebarOpen);
   const toggleSidebar = useChatStore((s) => s.toggleSidebar);
   const { isChatLoading, setIsChatLoading } = useChatStore((s) => s);
 
   useEffect(() => {
+    if (isGuest) return;
     const loadChats = async () => {
       await chatApi.getChats().then(res => setChats(res.map(c => ({ ...c, messages: [] }))));
     }
-
-    loadChats()
-  }, [])
+    loadChats();
+  }, [isGuest])
 
   const handleCreateChat = async () => {
-    setIsChatLoading(true)
-
+    setIsChatLoading(true);
     try {
-      await chatApi.newChat({
-        title: "Новый чат",
-        systemPrompt: FORMAT_PROMPT
-      }).then(chat => {
-        setChats([...chats, { ...chat, messages: [] }]);
-        navigate(`/chats/${chat.id}`);
-
-        if (window.innerWidth < 768) {
-          toggleSidebar();
-        }
-      });
-
-      setIsChatLoading(false)
+      const chat = await createChat('Новый чат', FORMAT_PROMPT);
+      navigate(`/chats/${chat.id}`);
+      if (window.innerWidth < 768) toggleSidebar();
+      setIsChatLoading(false);
     } catch (e) {
       console.error("Failed to create chat:", e);
-      setIsChatLoading(false)
+      setIsChatLoading(false);
     }
-
   };
 
   const handleChatClick = () => {
@@ -118,27 +109,49 @@ export default function Sidebar() {
           </button>
         </div>
 
-        <div className="sidebar__user">
-          <div className="sidebar__user-avatar">{(user && user.email[0])?.toUpperCase() || "A"}</div>
-          <div className="sidebar__user-info">
-            <span className="sidebar__user-name">{user && user.email}</span>
-            <span className="sidebar__user-tokens">
-              {user && parseFloat(String(user.balance)).toFixed(2)} ₽
-            </span>
+        {isGuest ? (
+          <div className="sidebar__guest">
+            <Link to="/login" className="sidebar__guest-btn sidebar__guest-btn--login">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                <polyline points="10 17 15 12 10 7" />
+                <line x1="15" y1="12" x2="3" y2="12" />
+              </svg>
+              <span>Войти</span>
+            </Link>
+            <Link to="/register" className="sidebar__guest-btn sidebar__guest-btn--register">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              <span>Зарегистрироваться</span>
+            </Link>
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="sidebar__user">
+              <div className="sidebar__user-avatar">{(user && user.email[0])?.toUpperCase() || "A"}</div>
+              <div className="sidebar__user-info">
+                <span className="sidebar__user-name">{user && user.email}</span>
+                <span className="sidebar__user-tokens">
+                  {user && parseFloat(String(user.balance)).toFixed(2)} ₽
+                </span>
+              </div>
+            </div>
 
-        <button
-          className="sidebar__logout-btn"
-          onClick={() => { authApi.logout().then(() => window.location.reload()) }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
-          <span>Выйти</span>
-        </button>
+            <button
+              className="sidebar__logout-btn"
+              onClick={() => { authApi.logout().then(() => window.location.reload()) }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              <span>Выйти</span>
+            </button>
+          </>
+        )}
       </div>
     </aside>
   );

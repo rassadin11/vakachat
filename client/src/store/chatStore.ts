@@ -1,9 +1,33 @@
 import { create } from 'zustand';
 import type { Chat, Message, Model, User } from '../types';
-import { fetchModels as apiFetchModels, fetchModels, streamChat, type StreamOptions } from '../api/openrouter';
+import { fetchModels as apiFetchModels, fetchModels, streamChat, streamGuestChat, type StreamOptions, type ApiMessage } from '../api/openrouter';
 import type { Attachment } from '../types';
 import { chatApi } from '../api/chats';
 import { calcMaxTokens } from '../utils/calcMaxTokens';
+
+export const GUEST_ALLOWED_PREFIXES = ['deepseek/', 'thudm/', 'z-ai/'];
+const TRIAL_STORAGE_KEY = 'vakachat_trial_left';
+const TRIAL_MAX = 5;
+
+function getTrialLeft(): number {
+  const stored = localStorage.getItem(TRIAL_STORAGE_KEY);
+  if (stored === null) return TRIAL_MAX;
+  const val = parseInt(stored, 10);
+  return isNaN(val) ? TRIAL_MAX : Math.max(0, val);
+}
+
+function isGuestModel(modelId: string): boolean {
+  return GUEST_ALLOWED_PREFIXES.some(p => modelId.startsWith(p));
+}
+
+export type NotificationType = 'balance' | 'trial';
+
+export interface AppNotification {
+  type: NotificationType;
+  message: string;
+  actionLabel?: string;
+  actionHref?: string;
+}
 
 export const DEFAULT_MODEL = 'anthropic/claude-sonnet-4-5';
 
@@ -19,6 +43,8 @@ function generateTitle(content: string): string {
 
 interface ChatStore {
   user: User | null;
+  isGuest: boolean;
+  trialRequestsLeft: number;
   chats: Chat[];
   activeChat: Chat | null;
   models: Model[];
@@ -31,13 +57,16 @@ interface ChatStore {
   isResearch: boolean;
   errorMessage: string;
   contextLimit: number;
+  notification: AppNotification | null;
 
   setContextLimit: (limit: number) => void;
+  setNotification: (n: AppNotification | null) => void;
   setIsResearch: (isResearch: boolean) => void;
   toggleSidebar: () => void;
   setIsChatLoading: (value: boolean) => void;
   setUser: (data: User) => void;
   setChats: (chats: Chat[]) => void;
+  setIsGuest: (value: boolean) => void;
   createChat: (message: string, systemPrompt: string) => Promise<Chat>;
   deleteChat: (id: string) => void;
   setActiveChat: (id: string) => Promise<boolean>;
@@ -53,6 +82,8 @@ interface ChatStore {
 
 export const useChatStore = create<ChatStore>((set, get) => ({
   user: null,
+  isGuest: false,
+  trialRequestsLeft: getTrialLeft(),
   chats: [],
   activeChat: null,
   models: [],
@@ -109,21 +140,45 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   sidebarOpen: true,
   errorMessage: '',
   contextLimit: 0,
+  notification: null,
   isResearch: false,
   isChatLoading: false,
 
   setIsChatLoading: (val) => set({ isChatLoading: val }),
   setContextLimit: (limit) => set({ contextLimit: limit }),
+  setNotification: (n) => set({ notification: n }),
   setIsResearch: (val) => set({ isResearch: val }),
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
 
   setUser: (user: User) => {
-    set(() => ({
-      user
-    }))
+    set(() => ({ user }))
+  },
+
+  setIsGuest: (value) => {
+    set({ isGuest: value });
   },
 
   createChat: async (message, systemPrompt = '') => {
+    const { isGuest } = get();
+
+    if (isGuest) {
+      const guestChat: Chat = {
+        id: generateId(),
+        title: message.trim().split(/\s+/).slice(0, 5).join(' '),
+        systemPrompt: systemPrompt || null,
+        userId: 'guest',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        messages: [],
+      };
+      set((state) => ({
+        chats: [guestChat, ...state.chats],
+        activeChat: guestChat,
+      }));
+      return guestChat;
+    }
+
     set(() => ({ isChatLoading: true }));
     const newChat = await chatApi.newChat({ title: message, systemPrompt }).then(res => res);
 
@@ -137,6 +192,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   },
 
   deleteChat: async (id) => {
+    const { isGuest } = get();
+    if (isGuest) {
+      set((state) => ({
+        chats: state.chats.filter((c) => c.id !== id),
+        activeChat: state.activeChat?.id === id ? null : state.activeChat,
+      }));
+      return;
+    }
     try {
       await chatApi.removeChat(id);
       set((state) => ({
@@ -149,6 +212,15 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   },
 
   setActiveChat: async (id) => {
+    const { isGuest, chats } = get();
+    if (isGuest) {
+      const chat = chats.find(c => c.id === id);
+      if (chat) {
+        set({ activeChat: chat });
+        return true;
+      }
+      return false;
+    }
     try {
       set(() => ({ isChatLoading: true }));
       const data = await chatApi.getChat(id);
@@ -207,11 +279,45 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   },
 
   sendMessage: async (content, options, attachments) => {
-    const { activeChat, contextLimit, isStreaming, activeModel, user, changeChatTitle } = get();
+    const { activeChat, contextLimit, isStreaming, activeModel, user, isGuest, trialRequestsLeft, changeChatTitle, setNotification } = get();
 
     if (isStreaming) return;
     if (!content.trim() && !attachments?.length) return;
     if (!activeChat) return;
+
+    // ── Ранние проверки до добавления сообщений ───────────────
+    if (isGuest) {
+      if (!isGuestModel(activeModel.id)) {
+        setNotification({
+          type: 'trial',
+          message: 'Выберите модель DeepSeek или zAI GLM для пробного режима.',
+          actionLabel: 'Зарегистрироваться',
+          actionHref: '/register',
+        });
+        return;
+      }
+      if (trialRequestsLeft <= 0) {
+        setNotification({
+          type: 'trial',
+          message: 'Пробные запросы закончились. Зарегистрируйтесь, чтобы продолжить.',
+          actionLabel: 'Зарегистрироваться',
+          actionHref: '/register',
+        });
+        return;
+      }
+    } else {
+      const modelPricePerToken = parseFloat(activeModel.pricing?.completion ?? '0');
+      const maxTokens = calcMaxTokens(Number(user?.balanceUSD), modelPricePerToken);
+      if (maxTokens === 0) {
+        setNotification({
+          type: 'balance',
+          message: 'Недостаточно средств. Пополните баланс для продолжения.',
+          actionLabel: 'Пополнить',
+          actionHref: '/profile',
+        });
+        return;
+      }
+    }
 
     const userMessage: Message = {
       id: generateId(),
@@ -237,39 +343,52 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     const isFirstMessage = activeChat.messages.length === 0 && activeChat.title === 'Новый чат';
     const controller = new AbortController();
 
-    set((state) => {
-      return {
-        isStreaming: true,
-        abortController: controller,
-        chats: state.chats.map((c) =>
-          c.id === activeChat.id
-            ? {
-              ...c,
-              title: isFirstMessage ? generateTitle(content) : c.title,
-              messages: [...c.messages, userMessage, assistantMessage],
-            }
-            : c,
-        ),
-        activeChat: {
-          ...activeChat,
-          title: isFirstMessage ? generateTitle(content) : activeChat.title,
-          messages: [...activeChat.messages, userMessage, assistantMessage],
-        },
-      };
-    });
+    set((state) => ({
+      isStreaming: true,
+      abortController: controller,
+      chats: state.chats.map((c) =>
+        c.id === activeChat.id
+          ? {
+            ...c,
+            title: isFirstMessage ? generateTitle(content) : c.title,
+            messages: [...c.messages, userMessage, assistantMessage],
+          }
+          : c,
+      ),
+      activeChat: {
+        ...activeChat,
+        title: isFirstMessage ? generateTitle(content) : activeChat.title,
+        messages: [...activeChat.messages, userMessage, assistantMessage],
+      },
+    }));
 
     if (isFirstMessage) {
-      changeChatTitle(activeChat.id, generateTitle(content))
+      changeChatTitle(activeChat.id, generateTitle(content));
     }
 
-    const modelMeta = get().models.find((m) => m.id === activeModel.id);
-    const isImageModel =
-      modelMeta?.architecture?.output_modalities?.includes('image') ?? false;
+    // ── Общие колбэки для стриминга ──────────────────────────
 
-    const modelPricePerToken = parseFloat(activeModel.pricing?.completion ?? '0');
-    const maxTokens = calcMaxTokens(Number(user?.balanceUSD), modelPricePerToken);
+    const onChunk = (chunk: string) => {
+      set((state) => ({
+        activeChat: state.activeChat
+          ? {
+            ...state.activeChat,
+            messages: state.activeChat.messages.map((m) =>
+              m.id === assistantMessageId
+                ? { ...m, content: m.content + chunk }
+                : m,
+            ),
+          }
+          : null,
+      }));
+    };
 
-    if (maxTokens === 0) {
+    const onDone = () => {
+      set({ isStreaming: false, abortController: null });
+    };
+
+    const onError = (error: Error) => {
+      console.error('[sendMessage] Stream error:', error);
       set((state) => ({
         isStreaming: false,
         abortController: null,
@@ -278,15 +397,44 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             ...state.activeChat,
             messages: state.activeChat.messages.map((m) =>
               m.id === assistantMessageId && m.content === ''
-                ? { ...m, content: 'Пополните баланс.' }
+                ? { ...m, content: error?.message }
                 : m,
             ),
           }
           : null,
       }));
+    };
 
+    // ── Гостевой путь ─────────────────────────────────────────
+
+    if (isGuest) {
+      const newLeft = trialRequestsLeft - 1;
+      localStorage.setItem(TRIAL_STORAGE_KEY, String(newLeft));
+      set({ trialRequestsLeft: newLeft });
+
+      const messagesForGuest: ApiMessage[] = [
+        ...(options?.systemPrompt ? [{ role: 'system', content: options.systemPrompt }] : []),
+        ...activeChat.messages
+          .filter(m => m.inContext && m.id !== assistantMessageId)
+          .map(m => ({ role: m.role, content: m.content })),
+        { role: 'user', content },
+      ];
+
+      await streamGuestChat(
+        { messages: messagesForGuest, model: activeModel.id, signal: controller.signal },
+        { onChunk, onDone, onError },
+      );
       return;
     }
+
+    // ── Авторизованный путь ───────────────────────────────────
+
+    const modelMeta = get().models.find((m) => m.id === activeModel.id);
+    const isImageModel =
+      modelMeta?.architecture?.output_modalities?.includes('image') ?? false;
+
+    const modelPricePerToken = parseFloat(activeModel.pricing?.completion ?? '0');
+    const maxTokens = calcMaxTokens(Number(user?.balanceUSD), modelPricePerToken);
 
     await streamChat(
       {
@@ -306,42 +454,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         attachments,
       },
       {
-        onChunk: (chunk) => {
-          set((state) => ({
-            activeChat: state.activeChat
-              ? {
-                ...state.activeChat,
-                messages: state.activeChat.messages.map((m) =>
-                  m.id === assistantMessageId
-                    ? { ...m, content: m.content + chunk }
-                    : m,
-                ),
-              }
-              : null,
-          }));
-        },
-
-        onDone: () => {
-          set({ isStreaming: false, abortController: null });
-        },
-
-        onError: (error) => {
-          console.error('[sendMessage] Stream error:', error);
-          set((state) => ({
-            isStreaming: false,
-            abortController: null,
-            activeChat: state.activeChat
-              ? {
-                ...state.activeChat,
-                messages: state.activeChat.messages.map((m) =>
-                  m.id === assistantMessageId && m.content === ''
-                    ? { ...m, content: error?.message }
-                    : m,
-                ),
-              }
-              : null,
-          }));
-        },
+        onChunk,
+        onDone,
+        onError,
 
         onImage: (imageUrl, imageContent) => {
           set((state) => ({
@@ -384,7 +499,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   },
 
   changeChatTitle: async (chatId, newTitle) => {
-    await chatApi.updateChatTitle(chatId, newTitle);
+    const { isGuest } = get();
+    if (!isGuest) {
+      await chatApi.updateChatTitle(chatId, newTitle);
+    }
     set((state) => ({
       chats: state.chats.map((c) =>
         c.id === chatId ? { ...c, title: newTitle } : c,
@@ -503,8 +621,15 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       const models = await apiFetchModels();
 
       if (models) {
-        // Оставляем порядок API как есть — он отражает популярность на OpenRouter
-        set({ models, isLoadingModels: false });
+        const { isGuest } = get();
+        const updates: Partial<ChatStore> = { models, isLoadingModels: false };
+
+        if (isGuest) {
+          const firstGuestModel = models.find(m => isGuestModel(m.id));
+          if (firstGuestModel) updates.activeModel = firstGuestModel;
+        }
+
+        set(updates);
       }
     } catch (error) {
       console.error('Failed to fetch models:', error);

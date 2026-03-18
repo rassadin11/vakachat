@@ -36,6 +36,8 @@ export default function MessageInput() {
   const fetchModels = useChatStore((s) => s.fetchModels);
   const { isResearch, setIsResearch } = useChatStore(s => s)
   const models = useChatStore((s) => s.models);
+  const isGuest = useChatStore((s) => s.isGuest);
+  const trialRequestsLeft = useChatStore((s) => s.trialRequestsLeft);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -431,9 +433,16 @@ export default function MessageInput() {
           <div ref={tooltipRef} className="message-input__global-tooltip" />
         </div>
 
-        <p className="message-input__hint">
-          vakachat — выбирай модель и пользуйся всеми её возможностями
-        </p>
+        {isGuest ? (
+          <p className="message-input__hint message-input__hint--trial">
+            Пробный режим · осталось <strong>{trialRequestsLeft} из 5</strong> запросов ·{' '}
+            <a href="/register">Зарегистрироваться</a>
+          </p>
+        ) : (
+          <p className="message-input__hint">
+            vakachat — выбирай модель и пользуйся всеми её возможностями
+          </p>
+        )}
       </div>
 
       <input

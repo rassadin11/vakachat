@@ -3,6 +3,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.routes.js';
 import chatRoutes from './routes/chat.routes.js';
+import guestRoutes from './routes/guest.routes.js';
 import rateLimit from 'express-rate-limit';
 import cors from 'cors';
 import { getModels } from './routes/models.js';
@@ -14,6 +15,12 @@ const authLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
   max: 50,
   message: { error: 'Слишком много попыток, попробуйте позже' },
+});
+
+const guestLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 час
+  max: 5,
+  message: { error: 'Исчерпан лимит пробных запросов. Зарегистрируйтесь для продолжения.' },
 });
 
 const app = express();
@@ -29,6 +36,7 @@ app.use(cookieParser());
 
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/chats', authLimiter, chatRoutes);
+app.use('/api/guest', guestLimiter, guestRoutes);
 
 app.get("/api/models", authLimiter, getModels);
 
