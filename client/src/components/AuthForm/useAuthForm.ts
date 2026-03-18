@@ -3,6 +3,7 @@ import type { AuthMode, FormState, TouchedFields, PasswordStrength } from "./Aut
 import { authApi } from "../../api/auth";
 import { useNavigate } from "react-router";
 import { ApiError, setAccessToken } from "../../api/client";
+import { useChatStore } from "../../store/chatStore";
 
 function validateEmail(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
@@ -112,12 +113,15 @@ export function useAuthForm(mode: AuthMode): UseAuthFormReturn {
             if (isRegister) {
                 const data = await authApi.register({ email, password, name: email.split("@")[0], promo });
                 setAccessToken(data.accessToken);
-                navigate("/");
             } else {
                 const data = await authApi.login({ email, password });
                 setAccessToken(data.accessToken);
-                navigate("/")
             }
+
+            const user = await authApi.me();
+            useChatStore.getState().setUser(user);
+            useChatStore.getState().setIsGuest(false);
+            navigate("/");
         } catch (e) {
             if (e instanceof ApiError) {
                 if (e.fields) {
