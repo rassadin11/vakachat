@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"D:\\\\frontend\\\\vakachat\\\\client\" && npx tsc --noEmit 2>&1)",
+      "Bash(cd \"D:\\\\frontend\\\\vakachat\\\\server\" && node --check src/controllers/guest.controller.js 2>&1 && node --check src/routes/guest.routes.js 2>&1 && echo \"OK\")",
+      "Bash(cd \"D:\\\\frontend\\\\vakachat\\\\client\" && npm run build 2>&1)",
+      "Bash(cd \"D:\\\\frontend\\\\vakachat\\\\server\" && npm run dev 2>&1)",
+      "Bash(cd \"D:\\\\frontend\\\\vakachat\\\\server\" && npm run 2>&1)",
+      "Bash(cd \"D:\\\\frontend\\\\vakachat\\\\server\" && npm start 2>&1)",
+      "Bash(cd \"D:\\\\frontend\\\\vakachat\\\\client\" && npm run dev 2>&1)",
+      "Bash(netstat -ano | findstr :3000 | findstr LISTENING)",
+      "Bash(taskkill /PID 18824 /F 2>&1)",
+      "Bash(cmd /c \"netstat -ano | findstr :3000\")",
+      "Bash(cmd /c \"tasklist | findstr node\")",
+      "Bash(cmd /c \"wmic process where name='node.exe' get ProcessId,CommandLine 2>nul\")",
+      "Bash(powershell -Command \"Get-Process node -ErrorAction SilentlyContinue | Select-Object Id, CPU | Format-Table\")",
+      "Bash(cd \"D:\\\\frontend\\\\vakachat\\\\server\" && npm start)",
+      "Bash(cd \"D:\\\\frontend\\\\vakachat\\\\client\" && npm run dev)",
+      "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 3001 | Select-Object -ExpandProperty OwningProcess | ForEach-Object { Stop-Process -Id $_ -Force }\")",
+      "Bash(powershell -Command \"$pids = \\(Get-NetTCPConnection -LocalPort 3001\\).OwningProcess; foreach \\($p in $pids\\) { Stop-Process -Id $p -Force -ErrorAction SilentlyContinue }; Write-Host 'Done'\")",
+      "Bash(powershell -File - <<'EOF'\n$ports = @\\(5173, 5174, 5175, 3001\\)\nforeach \\($port in $ports\\) {\n    $conns = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue\n    if \\($conns\\) {\n        $pids = $conns | Select-Object -ExpandProperty OwningProcess | Sort-Object -Unique\n        foreach \\($pid in $pids\\) {\n            Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue\n            Write-Host \"Killed PID $pid on port $port\"\n        }\n    }\n}\nWrite-Host \"Done\"\nEOF)",
+      "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 5173 -ErrorAction SilentlyContinue | Select-Object OwningProcess; Get-NetTCPConnection -LocalPort 5174 -ErrorAction SilentlyContinue | Select-Object OwningProcess; Get-NetTCPConnection -LocalPort 5175 -ErrorAction SilentlyContinue | Select-Object OwningProcess; Get-NetTCPConnection -LocalPort 3001 -ErrorAction SilentlyContinue | Select-Object OwningProcess\")",
+      "Bash(powershell -Command \"Stop-Process -Id 20236 -Force; Stop-Process -Id 7304 -Force; Stop-Process -Id 25368 -Force; Stop-Process -Id 25524 -Force; Write-Host 'All killed'\")",
+      "Bash(cd \"D:\\\\frontend\\\\vakachat\\\\client\" && npx tsc --noEmit 2>&1; echo \"exit: $?\")",
+      "Bash(ls \"D:\\\\frontend\\\\vakachat\\\\client\"/.env* 2>/dev/null || echo \"no env files\")"
+    ]
+  }
+}
