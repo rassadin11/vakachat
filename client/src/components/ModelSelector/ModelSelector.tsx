@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useChatStore } from '../../store/chatStore';
 import './ModelSelector.scss';
+import { SunIcon, ChevronDownIcon, SearchIcon } from '../../assets/icons';
 
 interface Props {
   chatId: string;
@@ -54,22 +55,13 @@ export default function ModelSelector({ currentModel }: Props) {
           <span className="model-selector__loading">Загрузка моделей...</span>
         ) : (
           <>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
-            </svg>
+            <SunIcon width="14" height="14" />
             <span className="model-selector__label">{currentModelName}</span>
-            <svg
+            <ChevronDownIcon
               className={`model-selector__chevron ${isOpen ? 'model-selector__chevron--open' : ''}`}
               width="13"
               height="13"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-            >
-              <path d="M6 9l6 6 6-6" />
-            </svg>
+            />
           </>
         )}
       </button>
@@ -77,10 +69,7 @@ export default function ModelSelector({ currentModel }: Props) {
       {isOpen && (
         <div className="model-selector__dropdown">
           <div className="model-selector__search-wrap">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8" />
-              <path d="M21 21l-4.35-4.35" />
-            </svg>
+            <SearchIcon width="13" height="13" />
             <input
               ref={searchRef}
               className="model-selector__search"

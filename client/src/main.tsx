@@ -2,9 +2,11 @@
 import { useState, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, Outlet, RouterProvider, Navigate } from "react-router-dom";
+import { SidebarToggleIcon } from './assets/icons';
 import { MainPage } from './pages/MainPage/MainPage';
 import Sidebar from './components/Sidebar/Sidebar';
 import AuthPage from './pages/AuthPage/AuthPage';
+import Profile from './pages/ProfilePage/Profile';
 import { authApi } from './api/auth';
 import { setAccessToken, getAccessToken } from './api/client';
 import './App.scss'
@@ -52,7 +54,7 @@ function ChatLayout(): JSX.Element {
   const toggleSidebar = useChatStore((s) => s.toggleSidebar);
 
   useEffect(() => {
-    const theme = localStorage.getItem("theme") || "dark";
+    const theme = localStorage.getItem("theme") || "light";
     document.documentElement.setAttribute("data-theme", theme);
   }, []);
 
@@ -66,11 +68,7 @@ function ChatLayout(): JSX.Element {
       <Notification />
       {!sidebarOpen && (
         <button className="sidebar-open-btn" onClick={toggleSidebar}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <line x1="9" y1="3" x2="9" y2="21" />
-          </svg>
+          <SidebarToggleIcon width="16" height="16" />
         </button>
       )}
       <Outlet />
@@ -87,13 +85,10 @@ const router = createBrowserRouter([
         children: [
           { path: "/", element: <ProtectedRoute><StartPage /></ProtectedRoute> },
           { path: "/chats/:chatId", element: <ProtectedRoute><MainPage /></ProtectedRoute> },
-          { path: "/chats/not-found", element: <ProtectedRoute><NotFoundChat /></ProtectedRoute> }
+          { path: "/chats/not-found", element: <ProtectedRoute><NotFoundChat /></ProtectedRoute> },
+          { path: "/profile", element: <ProtectedRoute><Profile /></ProtectedRoute> },
         ],
       },
-      // {
-      //   path: "/profile",            // ← без Sidebar
-      //   element: <ProtectedRoute><Profile /></ProtectedRoute>
-      // },
     ],
   },
   { path: "/login", element: <AuthPage /> },

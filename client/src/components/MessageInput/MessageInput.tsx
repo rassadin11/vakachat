@@ -9,6 +9,7 @@ import { FORMAT_PROMPT } from '../../utils/system-settings';
 import { Mode, ModeId, MODES } from '../../utils/modes';
 import { buildOptions, processFile } from './functions';
 import Dropdown from '../Dropdown/Dropdown';
+import { UploadIcon, FileTextIcon, FileIcon, CloseIcon, AttachIcon, ChevronDownIcon, CheckmarkIcon, EditIcon, StopIcon, SendIcon } from '../../assets/icons';
 
 const MAX_ROWS = 5;
 
@@ -258,11 +259,7 @@ export default function MessageInput() {
         >
           {isDragging && (
             <div className="message-input__drop-overlay">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="17 8 12 3 7 8" />
-                <line x1="12" y1="3" x2="12" y2="15" />
-              </svg>
+              <UploadIcon width="28" height="28" />
               Отпустите для загрузки
             </div>
           )}
@@ -275,13 +272,11 @@ export default function MessageInput() {
                     <img src={att.data} alt={att.name} className="message-input__attachment-img" />
                   ) : (
                     <div className="message-input__attachment-file">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        {att.isDocument ? (
-                          <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></>
-                        ) : (
-                          <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></>
-                        )}
-                      </svg>
+                      {att.isDocument ? (
+                        <FileTextIcon width="14" height="14" />
+                      ) : (
+                        <FileIcon width="14" height="14" />
+                      )}
                       <span title={att.name}>{att.name}</span>
                     </div>
                   )}
@@ -290,9 +285,7 @@ export default function MessageInput() {
                     onClick={() => removeAttachment(att.id)}
                     title="Удалить"
                   >
-                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                      <path d="M18 6L6 18M6 6l12 12" />
-                    </svg>
+                    <CloseIcon width="8" height="8" strokeWidth="3" />
                   </button>
                 </div>
               ))}
@@ -347,9 +340,7 @@ export default function MessageInput() {
                   }
                   type="button"
                 >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-                  </svg>
+                  <AttachIcon width="15" height="15" />
                 </button>
                 <button
                   className="message-input__model-btn"
@@ -358,9 +349,7 @@ export default function MessageInput() {
                 >
                   <ProviderLogo modelId={currentModelId} size={18} />
                   <span className="message-input__model-name">{currentModelName}</span>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M6 9l6 6 6-6" />
-                  </svg>
+                  <ChevronDownIcon width="12" height="12" />
                 </button>
               </div>
               <div className="message-input__bottom-row">
@@ -372,9 +361,7 @@ export default function MessageInput() {
                       className={`message-input__modes-trigger ${activeModes.size > 0 ? 'message-input__modes-trigger--active' : ''}`}
                       onClick={() => setModesOpen(v => !v)}
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                      </svg>
+                      <EditIcon width="14" height="14" />
                       Режимы
                       {activeModes.size > 0 && (
                         <span className="message-input__modes-count">{activeModes.size}</span>
@@ -395,9 +382,7 @@ export default function MessageInput() {
                               <span className="message-input__mode-icon">{mode.icon}</span>
                               <span className="message-input__modes-option-label">{mode.label}</span>
                               {isActive && (
-                                <svg className="message-input__modes-check" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                  <polyline points="20 6 9 17 4 12" />
-                                </svg>
+                                <CheckmarkIcon className="message-input__modes-check" width="13" height="13" />
                               )}
                             </button>
                           );
@@ -419,13 +404,9 @@ export default function MessageInput() {
               title={isStreaming ? 'Остановить' : 'Отправить'}
             >
               {isStreaming ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <rect x="4" y="4" width="16" height="16" rx="2" />
-                </svg>
+                <StopIcon width="14" height="14" />
               ) : (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" />
-                </svg>
+                <SendIcon width="15" height="15" />
               )}
             </button>
           </div>

@@ -1,5 +1,6 @@
 import { Button } from '../../components/Button/Button';
 import './StartPage.scss';
+import { ChatBubbleIcon } from '../../assets/icons';
 
 export default function StartPage(): JSX.Element {
 
@@ -7,9 +8,7 @@ export default function StartPage(): JSX.Element {
         <div className="empty-page">
             <div className="empty-page__content">
                 <div className="empty-page__icon-wrap">
-                    <svg className="empty-page__icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                    </svg>
+                    <ChatBubbleIcon className="empty-page__icon" width="40" height="40" strokeWidth="1.2" />
                     <div className="empty-page__glow" />
                 </div>
 

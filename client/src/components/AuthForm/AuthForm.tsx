@@ -3,16 +3,9 @@ import { useAuthForm } from "./useAuthForm";
 import type { AuthFormProps } from "./AuthForm.types";
 import styles from "./AuthForm.module.scss";
 import FormField from "../FormField/FormField";
-import { CheckIcon, EmailIcon, EyeIcon } from "../../assets/icons";
+import { CheckIcon, EmailIcon, EyeIcon, TagIcon } from "../../assets/icons";
 import { StrengthBar } from "./StrengthBar";
 
-const PromoIcon = () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-        <line x1="7" y1="7" x2="7.01" y2="7" />
-    </svg>
-);
 
 export default function AuthForm({ mode, onModeChange }: AuthFormProps): JSX.Element {
     const isRegister = mode === "register";
@@ -177,7 +170,7 @@ export default function AuthForm({ mode, onModeChange }: AuthFormProps): JSX.Ele
                                 maxLength={32}
                             />
                             <span className={`${styles.inputIcon} ${styles.inputIconStatic}`}>
-                                <PromoIcon />
+                                <TagIcon width="18" height="18" />
                             </span>
                         </div>
                     </FormField>

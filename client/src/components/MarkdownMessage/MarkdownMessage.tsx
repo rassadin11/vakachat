@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { CheckmarkIcon, CopyIcon, TableIcon } from '../../assets/icons';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeKatex from 'rehype-katex';
 import remarkGfm from 'remark-gfm';
@@ -28,10 +29,10 @@ function CodeBlock({ children }: { children: React.ReactNode }) {
 
   const handleCopy = () => {
     const code = extractText(children);
-    navigator.clipboard.writeText(code).then(() => {
+    copyToClipboard(code).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    });
+    }).catch(() => {});
   };
 
   return (
@@ -41,17 +42,12 @@ function CodeBlock({ children }: { children: React.ReactNode }) {
         <button className="md-code-block__copy" onClick={handleCopy} title="Скопировать">
           {copied ? (
             <>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M20 6L9 17l-5-5" />
-              </svg>
+              <CheckmarkIcon width="13" height="13" />
               Скопировано
             </>
           ) : (
             <>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="9" y="9" width="13" height="13" rx="2" />
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-              </svg>
+              <CopyIcon width="13" height="13" />
               Копировать
             </>
           )}
@@ -60,6 +56,27 @@ function CodeBlock({ children }: { children: React.ReactNode }) {
       <pre>{children}</pre>
     </div>
   );
+}
+
+function copyToClipboard(text: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    return navigator.clipboard.writeText(text).catch(() => copyViaExecCommand(text));
+  }
+  return copyViaExecCommand(text);
+}
+
+function copyViaExecCommand(text: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    ok ? resolve() : reject(new Error('execCommand copy failed'));
+  });
 }
 
 function extractText(node: React.ReactNode): string {
@@ -87,36 +104,28 @@ function TableBlock({ children }: { children: React.ReactNode }) {
       )
       .join('\n');
 
-    navigator.clipboard.writeText(tsv).then(() => {
+    copyToClipboard(tsv).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    });
+    }).catch(() => {});
   };
 
   return (
     <div className="md-table-block">
       <div className="md-table-block__header">
         <span className="md-table-block__label">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <path d="M3 9h18M3 15h18M9 3v18" />
-          </svg>
+          <TableIcon width="13" height="13" />
           Таблица
         </span>
         <button className="md-table-block__copy" onClick={handleCopy} title="Скопировать для Excel">
           {copied ? (
             <>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M20 6L9 17l-5-5" />
-              </svg>
+              <CheckmarkIcon width="13" height="13" />
               Скопировано
             </>
           ) : (
             <>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="9" y="9" width="13" height="13" rx="2" />
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-              </svg>
+              <CopyIcon width="13" height="13" />
               Копировать для Excel
             </>
           )}

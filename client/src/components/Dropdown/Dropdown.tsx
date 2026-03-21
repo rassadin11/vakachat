@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import "./Dropdown.scss"
 import { useChatStore } from '../../store/chatStore';
+import { ChatBubbleIcon, ChevronDownIcon } from '../../assets/icons';
 
 function Dropdown() {
     const { contextLimit, setContextLimit } = useChatStore(s => s)
@@ -33,14 +34,12 @@ function Dropdown() {
                 onClick={() => setIsContextOpen((p) => !p)}
                 title="Глубина контекста"
             >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
+                <ChatBubbleIcon width="12" height="12" />
                 <span>{contextLimit ? `${contextLimit} сообщ.` : '∞'}</span>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-                    style={{ transform: isContextOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
-                    <path d="M6 9l6 6 6-6" />
-                </svg>
+                <ChevronDownIcon
+                    width="10" height="10"
+                    style={{ transform: isContextOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}
+                />
             </button>
 
             {isContextOpen && (

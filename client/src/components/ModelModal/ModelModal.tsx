@@ -5,6 +5,7 @@ import { ProviderLogo } from './ProviderLogo';
 import './ModelModal.scss';
 import Loading from '../Loading/Loading';
 import { Model } from '../../types';
+import { CheckmarkIcon, BrainIcon, VisionIcon, FileIcon, CloseIcon, SearchIcon, SortArrowIcon, ChatBubbleIcon, ImageIcon, LockIcon } from '../../assets/icons';
 
 interface Props {
   onClose: () => void;
@@ -77,9 +78,7 @@ function ModelCard({ model, isActive, activeChatId, handleClose, locked }: Model
     >
       {isActive && (
         <div className="model-card__check">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-            <path d="M20 6L9 17l-5-5" />
-          </svg>
+          <CheckmarkIcon width="11" height="11" strokeWidth="3" />
         </div>
       )}
       <div className="model-card__logo">
@@ -90,28 +89,19 @@ function ModelCard({ model, isActive, activeChatId, handleClose, locked }: Model
         <div className="model-card__badges">
           {reasoning && (
             <span className="model-card__badge model-card__badge--reasoning" title="Думает — модель рассуждает перед ответом">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-1.14Z" />
-                <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-1.14Z" />
-              </svg>
+              <BrainIcon width="11" height="11" />
               Думает
             </span>
           )}
           {vision && (
             <span className="model-card__badge model-card__badge--vision" title="Изображения — принимает изображения на вход">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
+              <VisionIcon width="11" height="11" />
               Изображения
             </span>
           )}
           {file && (
             <span className="model-card__badge model-card__badge--file" title="Файлы — принимает файлы на вход">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-              </svg>
+              <FileIcon width="11" height="11" />
               Файлы
             </span>
           )}
@@ -222,17 +212,13 @@ export default function ModelModal({ onClose }: Props) {
       >
         {label}
         {key !== 'default' && isActive && (
-          <svg
+          <SortArrowIcon
             className={`model-modal__sort-arrow ${sortDir === 'desc' ? 'model-modal__sort-arrow--desc' : ''}`}
-            width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-          >
-            <path d="M12 5v14M6 13l6 6 6-6" />
-          </svg>
+            width="12" height="12"
+          />
         )}
         {key !== 'default' && !isActive && (
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" opacity="0.4">
-            <path d="M12 5v14M6 13l6 6 6-6" />
-          </svg>
+          <SortArrowIcon width="12" height="12" strokeWidth="2" opacity={0.4} />
         )}
       </button>
     );
@@ -249,17 +235,12 @@ export default function ModelModal({ onClose }: Props) {
             )}
           </div>
           <button className="model-modal__close" onClick={handleClose} title="Закрыть">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
+            <CloseIcon width="16" height="16" />
           </button>
         </div>
 
         <div className="model-modal__search-wrap">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="11" cy="11" r="8" />
-            <path d="M21 21l-4.35-4.35" />
-          </svg>
+          <SearchIcon width="15" height="15" />
           <input
             ref={searchRef}
             className="model-modal__search"
@@ -269,9 +250,7 @@ export default function ModelModal({ onClose }: Props) {
           />
           {search && (
             <button className="model-modal__search-clear" onClick={() => setSearch('')}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
+              <CloseIcon width="13" height="13" />
             </button>
           )}
         </div>
@@ -292,9 +271,7 @@ export default function ModelModal({ onClose }: Props) {
             <>
               {imageModels.length > 0 && (
                 <div className="model-modal__section-header">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                  </svg>
+                  <ChatBubbleIcon width="14" height="14" />
                   Языковые модели
                 </div>
               )}
@@ -305,11 +282,7 @@ export default function ModelModal({ onClose }: Props) {
           {imageModels.length > 0 && (
             <>
               <div className="model-modal__section-header">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <circle cx="8.5" cy="8.5" r="1.5" />
-                  <path d="M21 15l-5-5L5 21" />
-                </svg>
+                <ImageIcon width="14" height="14" />
                 Генерация изображений
               </div>
               {imageModels.map((model) => <ModelCard key={model.id} model={model} isActive={model.id === currentModel.id} activeChatId={activeChatId ?? null} handleClose={handleClose} />)}
@@ -319,10 +292,7 @@ export default function ModelModal({ onClose }: Props) {
           {filteredLocked.length > 0 && (
             <>
               <div className="model-modal__section-header model-modal__section-header--locked">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
+                <LockIcon width="14" height="14" />
                 Доступно после регистрации
               </div>
               {filteredLocked.map((model) => (
