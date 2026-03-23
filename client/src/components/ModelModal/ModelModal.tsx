@@ -1,135 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useChatStore, GUEST_ALLOWED_PREFIXES } from '../../store/chatStore';
-import { ProviderLogo } from './ProviderLogo';
 import './ModelModal.scss';
 import Loading from '../Loading/Loading';
-import { Model } from '../../types';
-import { CheckmarkIcon, BrainIcon, VisionIcon, FileIcon, CloseIcon, SearchIcon, SortArrowIcon, ChatBubbleIcon, ImageIcon, LockIcon } from '../../assets/icons';
+import { CloseIcon, SearchIcon, ChatBubbleIcon, ImageIcon, LockIcon } from '../../assets/icons';
+import { ModelCard } from './ModelCard';
+import { filterAndSortModels } from './filterAndSortModels';
+import { LabelSortItem } from './LabelSortItem';
+import { SortDir, SortKey } from './types';
 
 interface Props {
   onClose: () => void;
 }
 
-type SortKey = 'default' | 'input' | 'output';
-type SortDir = 'asc' | 'desc';
-
-function formatPrice(pricing?: Model["pricing"]) {
-  if (!pricing) return null;
-
-  const inp = parseFloat(pricing.promptRUB) * 10_000;
-  const out = parseFloat(pricing.completionRUB) * 10_000;
-
-  const fmt = (n: number) =>
-    n === 0 ? '$0' : n < 8 ? `${n.toFixed(3)} ₽` : `${n.toFixed(2)} ₽`;
-  return { free: false, input: fmt(inp), output: fmt(out) };
-}
-
-function getPrice(pricing: { prompt: string; completion: string } | undefined, field: 'prompt' | 'completion'): number {
-  return parseFloat(pricing?.[field] ?? '0');
-}
-
 const CLOSE_DURATION = 180; // мс — должно совпадать с длительностью CSS-анимации
-
-function isReasoningModel(model: import('../../types').Model): boolean {
-  if (model.supported_parameters?.includes('reasoning')) return true;
-  const id = model.id.toLowerCase();
-  return (
-    /\/o\d/.test(id) ||
-    id.includes('-r1') ||
-    id.includes(':thinking') ||
-    id.includes('qwq') ||
-    id.includes('deepseek-r')
-  );
-}
-
-function isVisionModel(model: import('../../types').Model): boolean {
-  return model.architecture?.input_modalities?.includes('image') ?? false;
-}
-
-function isFilesModel(model: import('../../types').Model): boolean {
-  return model.architecture?.input_modalities?.includes('file') ?? false;
-}
-
-interface ModelCardProps {
-  model: import('../../types').Model;
-  isActive: boolean;
-  activeChatId: string | null;
-  handleClose: () => void;
-  locked?: boolean;
-}
-
-function ModelCard({ model, isActive, activeChatId, handleClose, locked }: ModelCardProps) {
-  const price = formatPrice(model.pricing);
-  const reasoning = isReasoningModel(model);
-  const vision = isVisionModel(model);
-  const setModel = useChatStore((s) => s.setModel);
-  const file = isFilesModel(model);
-
-  return (
-    <button
-      className={`model-card ${isActive ? 'model-card--active' : ''} ${locked ? 'model-card--locked' : ''}`}
-      onClick={() => {
-        if (locked) return;
-        if (activeChatId) setModel(model.id);
-        handleClose();
-      }}
-      disabled={locked}
-    >
-      {isActive && (
-        <div className="model-card__check">
-          <CheckmarkIcon width="11" height="11" strokeWidth="3" />
-        </div>
-      )}
-      <div className="model-card__logo">
-        <ProviderLogo modelId={model.id} size={40} />
-      </div>
-      <div className="model-card__name">{model.name}</div>
-      {(reasoning || vision || file) && (
-        <div className="model-card__badges">
-          {reasoning && (
-            <span className="model-card__badge model-card__badge--reasoning" title="Думает — модель рассуждает перед ответом">
-              <BrainIcon width="11" height="11" />
-              Думает
-            </span>
-          )}
-          {vision && (
-            <span className="model-card__badge model-card__badge--vision" title="Изображения — принимает изображения на вход">
-              <VisionIcon width="11" height="11" />
-              Изображения
-            </span>
-          )}
-          {file && (
-            <span className="model-card__badge model-card__badge--file" title="Файлы — принимает файлы на вход">
-              <FileIcon width="11" height="11" />
-              Файлы
-            </span>
-          )}
-        </div>
-      )}
-      <div className="model-card__id">{model.id}</div>
-      <div className="model-card__price">
-        {!price ? (
-          <span className="model-card__price-unknown">—</span>
-        ) : price.free ? (
-          <span className="model-card__price-free">Бесплатно</span>
-        ) : (
-          <>
-            <span className="model-card__price-row">
-              <span className="model-card__price-arrow">↑</span>
-              {price.input}
-            </span>
-            <span className="model-card__price-row">
-              <span className="model-card__price-arrow">↓</span>
-              {price.output}
-            </span>
-            <span className="model-card__price-unit">* за 10K токенов</span>
-          </>
-        )}
-      </div>
-    </button>
-  );
-}
 
 export default function ModelModal({ onClose }: Props) {
   const [search, setSearch] = useState('');
@@ -177,52 +61,9 @@ export default function ModelModal({ onClose }: Props) {
     }
   };
 
-  const filtered = models.filter(
-    (m) =>
-      m.name.toLowerCase().includes(search.toLowerCase()) ||
-      m.id.toLowerCase().includes(search.toLowerCase()),
+  const { filteredLocked, sorted, textModels, imageModels } = filterAndSortModels(
+    models, lockedModels, search, sortKey, sortDir,
   );
-
-  const filteredLocked = lockedModels.filter(
-    (m) =>
-      m.name.toLowerCase().includes(search.toLowerCase()) ||
-      m.id.toLowerCase().includes(search.toLowerCase()),
-  );
-
-  const sorted = [...filtered].sort((a, b) => {
-    if (sortKey === 'default') return 0;
-    const field = sortKey === 'input' ? 'prompt' : 'completion';
-    const diff = getPrice(a.pricing, field) - getPrice(b.pricing, field);
-    return sortDir === 'asc' ? diff : -diff;
-  });
-
-  const textModels = sorted.filter(
-    (m) => !m.architecture?.output_modalities?.includes('image'),
-  );
-  const imageModels = sorted.filter(
-    (m) => m.architecture?.output_modalities?.includes('image'),
-  );
-
-  const sortLabel = (key: SortKey, label: string) => {
-    const isActive = sortKey === key;
-    return (
-      <button
-        className={`model-modal__sort-btn ${isActive ? 'model-modal__sort-btn--active' : ''}`}
-        onClick={() => handleSortClick(key)}
-      >
-        {label}
-        {key !== 'default' && isActive && (
-          <SortArrowIcon
-            className={`model-modal__sort-arrow ${sortDir === 'desc' ? 'model-modal__sort-arrow--desc' : ''}`}
-            width="12" height="12"
-          />
-        )}
-        {key !== 'default' && !isActive && (
-          <SortArrowIcon width="12" height="12" strokeWidth="2" opacity={0.4} />
-        )}
-      </button>
-    );
-  };
 
   return createPortal(
     <div className={`model-modal-overlay ${isClosing ? 'model-modal-overlay--closing' : ''}`} onClick={handleClose}>
@@ -257,9 +98,9 @@ export default function ModelModal({ onClose }: Props) {
 
         <div className="model-modal__sort-bar">
           <span className="model-modal__sort-label">Сортировка:</span>
-          {sortLabel('default', 'Популярность')}
-          {sortLabel('input', 'Цена входа')}
-          {sortLabel('output', 'Цена выхода')}
+          <LabelSortItem sortKey={sortKey} sortDir={sortDir} itemKey="default" label="Популярность" onClick={handleSortClick} />
+          <LabelSortItem sortKey={sortKey} sortDir={sortDir} itemKey="input" label="Цена входа" onClick={handleSortClick} />
+          <LabelSortItem sortKey={sortKey} sortDir={sortDir} itemKey="output" label="Цена выхода" onClick={handleSortClick} />
         </div>
 
         {isLoadingModels ? <Loading /> : <div className="model-modal__grid">

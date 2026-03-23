@@ -1,10 +1,10 @@
 // src/main.tsx
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, Outlet, RouterProvider, Navigate } from "react-router-dom";
 import { SidebarToggleIcon } from './assets/icons';
 import { MainPage } from './pages/MainPage/MainPage';
-import Sidebar from './components/Sidebar/Sidebar';
+const Sidebar = lazy(() => import('./components/Sidebar/Sidebar'));
 import AuthPage from './pages/AuthPage/AuthPage';
 import Profile from './pages/ProfilePage/Profile';
 import { authApi } from './api/auth';
@@ -52,11 +52,16 @@ function ProtectedRoute({ children }: { children: JSX.Element }): JSX.Element {
 function ChatLayout(): JSX.Element {
   const sidebarOpen = useChatStore((s) => s.sidebarOpen);
   const toggleSidebar = useChatStore((s) => s.toggleSidebar);
+  const [sidebarMounted, setSidebarMounted] = useState(() => window.innerWidth >= 768);
 
   useEffect(() => {
     const theme = localStorage.getItem("theme") || "light";
     document.documentElement.setAttribute("data-theme", theme);
   }, []);
+
+  useEffect(() => {
+    if (sidebarOpen && !sidebarMounted) setSidebarMounted(true);
+  }, [sidebarOpen]);
 
   return (
     <>
@@ -64,7 +69,11 @@ function ChatLayout(): JSX.Element {
         className={`sidebar-overlay ${sidebarOpen ? 'sidebar-overlay--visible' : ''}`}
         onClick={toggleSidebar}
       />
-      <Sidebar />
+      {sidebarMounted && (
+        <Suspense fallback={null}>
+          <Sidebar />
+        </Suspense>
+      )}
       <Notification />
       {!sidebarOpen && (
         <button className="sidebar-open-btn" onClick={toggleSidebar}>

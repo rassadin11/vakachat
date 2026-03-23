@@ -138,7 +138,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       "repetition_penalty": null
     },
   },
-  sidebarOpen: true,
+  sidebarOpen: window.innerWidth >= 768,
   errorMessage: '',
   contextLimit: 0,
   notification: null,

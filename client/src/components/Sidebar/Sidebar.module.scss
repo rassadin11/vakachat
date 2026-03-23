@@ -199,7 +199,6 @@
           color: var(--accent);
         }
 
-        // Убираем delete при active hover — чтобы не мешала
         &:hover {
           background: var(--accent-dim);
         }
@@ -219,7 +218,6 @@
         color: var(--accent);
       }
 
-      // Убираем delete при active hover — чтобы не мешала
       &:hover {
         background: var(--accent-dim);
       }
@@ -309,7 +307,7 @@
     width: 34px;
     height: 34px;
     min-width: 34px;
-    border-radius: 10px; // скруглённый квадрат вместо круга — современнее
+    border-radius: 10px;
     background: var(--accent-dim);
     border: 1px solid var(--accent-border);
     color: var(--accent);
@@ -320,10 +318,11 @@
     justify-content: center;
     user-select: none;
     transition: border-color 0.2s ease;
+  }
 
-    .sidebar__user:hover & {
-      border-color: var(--accent);
-    }
+  // Аватар при ховере на user-строку
+  &__user:hover &__user-avatar {
+    border-color: var(--accent);
   }
 
   &__user-info {
@@ -351,26 +350,6 @@
     color: var(--text-secondary);
     white-space: nowrap;
     letter-spacing: -0.3px;
-  }
-
-  // ─── Кнопка выхода (если вынесешь из Link) ──────
-  &__logout-btn {
-    margin-left: auto;
-    padding: 4px 8px;
-    border: 1px solid var(--border-input);
-    border-radius: 6px;
-    background: transparent;
-    color: var(--text-secondary);
-    font-size: 11px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    white-space: nowrap;
-
-    &:hover {
-      color: var(--error);
-      border-color: var(--error-border);
-      background: var(--error-dim);
-    }
   }
 
   &__new-chat {
@@ -459,6 +438,57 @@
     }
   }
 
+  &__guest {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 8px 10px;
+    flex-shrink: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  &__guest-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+
+    &--login {
+      border: 1px solid var(--border-input);
+      background: transparent;
+      color: var(--text-secondary);
+
+      &:hover {
+        color: var(--text-primary);
+        border-color: var(--border-hover);
+        background: var(--bg-hover);
+      }
+    }
+
+    &--register {
+      border: 1px solid var(--accent-border);
+      background: var(--accent-dim);
+      color: var(--accent);
+
+      &:hover {
+        background: var(--accent);
+        color: #fff;
+      }
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+
   @media (max-width: 768px) {
     position: fixed;
     top: 0;
@@ -475,7 +505,6 @@
       transform: translateX(0);
     }
 
-    // На десктопе --collapsed скрывает через width, на мобиле через transform
     &--collapsed {
       transform: translateX(-100%);
       width: 50% !important;
@@ -523,56 +552,5 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-  }
-}
-
-.sidebar__guest {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px 8px 10px;
-  flex-shrink: 0;
-  border-top: 1px solid var(--border);
-}
-
-.sidebar__guest-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 500;
-  font-family: 'Inter', sans-serif;
-  cursor: pointer;
-  text-decoration: none;
-  transition: all 0.15s ease;
-
-  &--login {
-    border: 1px solid var(--border-input);
-    background: transparent;
-    color: var(--text-secondary);
-
-    &:hover {
-      color: var(--text-primary);
-      border-color: var(--border-hover);
-      background: var(--bg-hover);
-    }
-  }
-
-  &--register {
-    border: 1px solid var(--accent-border);
-    background: var(--accent-dim);
-    color: var(--accent);
-
-    &:hover {
-      background: var(--accent);
-      color: #fff;
-    }
-  }
-
-  &:active {
-    transform: scale(0.98);
   }
 }

@@ -39,6 +39,34 @@ export async function processFile(file: File, allowImages: boolean, allowDocumen
     };
 }
 
+export function autoResizeTextarea(el: HTMLTextAreaElement, maxRows: number) {
+    el.style.height = '0';
+
+    if (!el.dataset.lineH) {
+        const v = el.value;
+        el.value = 'x';
+        const h1 = el.scrollHeight;
+        el.value = 'x\nx';
+        const h2 = el.scrollHeight;
+        el.value = v;
+        el.dataset.lineH = String(h2 - h1);
+        el.dataset.baseH = String(h1);
+    }
+
+    const lineH = Number(el.dataset.lineH);
+    const baseH = Number(el.dataset.baseH);
+    const maxH = baseH + lineH * (maxRows - 1);
+    const scrollH = el.scrollHeight;
+
+    if (scrollH > maxH) {
+        el.style.height = `${maxH}px`;
+        el.style.overflowY = 'auto';
+    } else {
+        el.style.height = `${scrollH}px`;
+        el.style.overflowY = 'hidden';
+    }
+}
+
 export function buildOptions(activeModes: Set<ModeId>): StreamOptions | undefined {
     const prompts: string[] = [];
     const plugins: string[] = [];
