@@ -1,5 +1,5 @@
 import { SortArrowIcon } from '../../assets/icons';
-import { SortKey, SortDir } from './filterAndSortModels';
+import { SortDir, SortKey } from './types';
 
 interface Props {
   sortKey: SortKey;
