@@ -29,6 +29,7 @@ export function processQueue(error: unknown, token: string | null = null) {
 }
 
 async function request<T>(path: string, method: HttpMethod, body?: unknown): Promise<T> {
+    console.log(`API Request: ${import.meta.env.VITE_API_BASE} ${path}`, body);
     let res = await fetch(`${import.meta.env.VITE_API_BASE}${path}`, {
         method,
         credentials: "include",

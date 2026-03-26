@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useChatStore } from '../../store/chatStore';
 import styles from './Sidebar.module.scss';
 import { chatApi } from '../../api/chats';
@@ -6,11 +6,13 @@ import { Link, useNavigate } from 'react-router';
 import { authApi } from '../../api/auth';
 import ThemeToggle from '../ThemeToggle/ThemeToggle';
 import { FORMAT_PROMPT } from '../../utils/system-settings';
-import { SidebarToggleIcon, PlusIcon, LoginIcon, UserIcon, LogoutIcon } from '../../assets/icons';
+import { SidebarToggleIcon, PlusIcon, LoginIcon, UserIcon, LogoutIcon, PaymentIcon } from '../../assets/icons';
 import ChatItem from './ChatItem';
+import PaymentModal from '../PaymentModal/PaymentModal';
 
 export default function Sidebar() {
   const navigate = useNavigate();
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
   const chats = useChatStore((s) => s.chats);
   const setChats = useChatStore((s) => s.setChats);
@@ -96,16 +98,30 @@ export default function Sidebar() {
               </div>
             </Link>
 
-            <button
-              className={styles['sidebar__logout-btn']}
-              onClick={() => { authApi.logout().then(() => window.location.reload()) }}
-            >
-              <LogoutIcon width="14" height="14" />
-              <span>Выйти</span>
-            </button>
+            <div className={styles['sidebar__wrapper']}>
+              <button
+                className={`${styles['sidebar__btn']} ${styles['sidebar__payment-btn']}`}
+                onClick={() => { setIsPaymentOpen(true) }}
+              >
+                <PaymentIcon width="14" height="14" />
+                <span>Пополнить</span>
+              </button>
+              <button
+                className={`${styles['sidebar__btn']} ${styles['sidebar__logout-btn']}`}
+                onClick={() => { authApi.logout().then(() => window.location.reload()) }}
+              >
+                <LogoutIcon width="14" height="14" />
+                <span>Выйти</span>
+              </button>
+            </div>
           </>
         )}
       </div>
+
+      <PaymentModal
+        isOpen={isPaymentOpen}
+        onClose={() => setIsPaymentOpen(false)}
+      />
     </aside>
   );
 }

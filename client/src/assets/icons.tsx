@@ -93,6 +93,39 @@ export function LogoutIcon(props: React.SVGProps<SVGSVGElement>) {
     );
 }
 
+export function PaymentIcon({ width = "14", height = "14" }) {
+    return (
+        <svg
+            width={width}
+            height={height}
+            viewBox="0 0 14 14"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+        >
+            <rect
+                x="1" y="6"
+                width="12" height="7"
+                rx="1.5"
+                stroke="currentColor"
+                strokeWidth="1.3"
+            />
+            <path
+                d="M7 1V7M7 7L4.5 4.5M7 7L9.5 4.5"
+                stroke="currentColor"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M4.5 9.5H9.5"
+                stroke="currentColor"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+            />
+        </svg>
+    )
+};
+
 export function SunIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>

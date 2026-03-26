@@ -386,12 +386,20 @@
     }
   }
 
-  &__logout-btn {
+  &__wrapper {
     display: flex;
+    flex-direction: column;
+    padding: 0 8px;
+    gap: 8px;
+    margin: 0.5rem 0;
+  }
+
+  &__btn {
+    flex: 1 1 auto;
+    width: 100%;
+    display: flex;
+    gap: 8px;
     align-items: center;
-    gap: 0.5rem;
-    width: calc(100% - 16px);
-    margin: 0.5rem 8px 10px;
     padding: 8px 12px;
     border: 1px solid var(--border-input);
     border-radius: 8px;
@@ -402,14 +410,24 @@
     cursor: pointer;
     transition: all 0.15s ease;
 
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+
+  &__logout-btn {
     &:hover {
       color: var(--error);
       border-color: var(--error-border);
       background: var(--error-dim);
     }
+  }
 
-    &:active {
-      transform: scale(0.98);
+  &__payment-btn {
+    &:hover {
+      color: var(--accent);
+      border-color: var(--accent-border);
+      background: var(--accent-dim);
     }
   }
 
