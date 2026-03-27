@@ -40,7 +40,7 @@ export async function getChat(chatId, userId) {
         },
         include: {
             messages: {
-                orderBy: { order: 'asc' },
+                orderBy: { createdAt: 'asc' },
                 include: {
                     attachments: {
                         select: {

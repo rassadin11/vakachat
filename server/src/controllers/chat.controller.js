@@ -179,7 +179,7 @@ export async function createMessage(req, res) {
             chatId,
             inContext: true,
         },
-        orderBy: { order: 'asc' },
+        orderBy: { createdAt: 'asc' },
         select: {
             role: true,
             content: true,
@@ -194,6 +194,8 @@ export async function createMessage(req, res) {
             },
         },
     });
+
+    console.log(history)
 
     const processedAttachments = [];
     for (const a of (attachments ?? [])) {
@@ -219,7 +221,11 @@ export async function createMessage(req, res) {
         ? buildUserMessageContent(content.trim(), processedAttachments)
         : content.trim();
 
-    const allHistory = history.slice(0, -1).map((msg) => ({
+    let sortedHistory = [...history].sort((a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+
+    const allHistory = sortedHistory.map((msg) => ({
         role: msg.role,
         content: msg.attachments?.length && supportsVision
             ? buildUserMessageContent(msg.content, msg.attachments)
@@ -227,17 +233,7 @@ export async function createMessage(req, res) {
     }));
 
     const historyForAI = contextLimit
-        ? (() => {
-            let userCount = 0;
-            const cutIndex = allHistory.reduceRight((acc, msg, i) => {
-                if (acc !== -1) return acc;
-                if (msg.role === 'user') userCount++;
-                if (userCount === contextLimit) return i;
-                return -1;
-            }, -1);
-
-            return cutIndex === -1 ? allHistory : allHistory.slice(cutIndex);
-        })()
+        ? allHistory.slice(- (contextLimit * 2)) // берем последние N пар сообщений
         : allHistory;
 
     const messagesForAI = [
