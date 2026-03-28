@@ -6,7 +6,7 @@ import { chatApi } from '../api/chats';
 import { authApi } from '../api/auth';
 import { calcMaxTokens } from '../utils/calcMaxTokens';
 
-export const GUEST_ALLOWED_PREFIXES = ['deepseek/', 'thudm/', 'z-ai/'];
+export const GUEST_ALLOWED_PREFIXES = ['deepseek/', 'thudm/', 'z-ai/', 'google/gemini-3.1-flash-lite-preview'];
 const TRIAL_STORAGE_KEY = 'vakachat_trial_left';
 const TRIAL_MAX = 5;
 
@@ -30,7 +30,7 @@ export interface AppNotification {
   actionHref?: string;
 }
 
-export const DEFAULT_MODEL = 'anthropic/claude-sonnet-4-5';
+export const DEFAULT_MODEL = 'google/gemini-3.1-flash-lite-preview';
 
 function generateId(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -250,7 +250,6 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       }))
     }
 
-    console.log(modelId.includes('research'))
     if (modelId.includes('research')) {
       set(() => ({
         isResearch: true
@@ -268,7 +267,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
   resetModel: () => {
     set(state => ({
-      activeModel: state.models.find(m => m.id === 'deepseek/deepseek-v3.2'),
+      activeModel: state.models.find(m => m.id === 'google/gemini-3.1-flash-lite-preview'),
       isResearch: false
     }))
   },
@@ -503,7 +502,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       set((state) => ({
         user: state.user ? { ...state.user, balance: freshUser.balance, balanceUSD: freshUser.balanceUSD } : null,
       }));
-    }).catch(() => {});
+    }).catch(() => { });
   },
 
   changeChatTitle: async (chatId, newTitle) => {
@@ -633,7 +632,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         const updates: Partial<ChatStore> = { models, isLoadingModels: false };
 
         if (isGuest) {
-          const firstGuestModel = models.find(m => isGuestModel(m.id));
+          const firstGuestModel = models.find(m => m.id === 'google/gemini-3.1-flash-lite-preview');
           if (firstGuestModel) updates.activeModel = firstGuestModel;
         }
 

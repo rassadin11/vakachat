@@ -14,7 +14,8 @@ const BLOCKED_PREFIXES = [
     'free',
     'gemma',
     'gpt-3.5',
-    'gpt-4-turbo'
+    'gpt-4-turbo',
+    'gpt-4o'
 ];
 
 export async function getModels(req, res) {

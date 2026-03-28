@@ -1,6 +1,6 @@
 // controllers/guest.controller.js
 
-const GUEST_ALLOWED_PREFIXES = ['deepseek/', 'thudm/', 'z-ai/'];
+const GUEST_ALLOWED_PREFIXES = ['deepseek/', 'thudm/', 'z-ai/', 'google/gemini-3.1-flash-lite-preview'];
 
 function isModelAllowed(modelId) {
     return GUEST_ALLOWED_PREFIXES.some(prefix => modelId.startsWith(prefix));
@@ -57,7 +57,7 @@ export async function guestMessage(req, res) {
     res.setHeader('Connection', 'keep-alive');
 
     const reader = upstreamResponse.body.getReader();
-    controller.signal.addEventListener('abort', () => reader.cancel().catch(() => {}));
+    controller.signal.addEventListener('abort', () => reader.cancel().catch(() => { }));
 
     try {
         while (true) {
@@ -72,7 +72,7 @@ export async function guestMessage(req, res) {
     } catch {
         // stream interrupted
     } finally {
-        reader.cancel().catch(() => {});
+        reader.cancel().catch(() => { });
     }
 
     if (!res.writableEnded) {
