@@ -6,6 +6,7 @@ export default function StartPage(): JSX.Element {
 
     return (
         <div className="empty-page">
+            <p className='sale'>При регистрации введите промокод <span>CHAT</span> и получите <span>50 рублей</span>!</p>
             <div className="empty-page__content">
                 <div className="empty-page__icon-wrap">
                     <ChatBubbleIcon className="empty-page__icon" width="40" height="40" strokeWidth="1.2" />
