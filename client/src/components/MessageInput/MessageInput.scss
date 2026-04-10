@@ -259,8 +259,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border: 1px solid transparent;
     border-radius: 8px;
     background: transparent;
@@ -280,6 +280,7 @@
     display: flex;
     align-items: center;
     gap: 7px;
+    height: 28px;
     padding: 4px 10px 4px 5px;
     border: 1px solid transparent;
     border-radius: 8px;
@@ -407,6 +408,7 @@
     display: flex;
     align-items: center;
     gap: 5px;
+    height: 28px;
     padding: 4px 10px;
     border: 1px solid var(--border);
     border-radius: 20px;
