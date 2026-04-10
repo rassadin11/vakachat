@@ -2,8 +2,9 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import type { Message } from '../../types';
 import { useChatStore } from '../../store/chatStore';
 import MarkdownMessage from '../MarkdownMessage/MarkdownMessage';
+import { ImageLightbox } from './ImageLightbox';
 import './MessageList.scss';
-import { ChatBubbleIcon, UserIcon, SunIcon, CheckmarkIcon, CloseIcon, FileIcon, DownloadIcon } from '../../assets/icons';
+import { ChatBubbleIcon, UserIcon, SunIcon, CheckmarkIcon, CloseIcon, FileIcon } from '../../assets/icons';
 
 interface Props {
   messages: Message[];
@@ -21,13 +22,6 @@ export default function MessageList({ messages }: Props) {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length, isStreaming]);
-
-  useEffect(() => {
-    if (!lightboxSrc) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setLightboxSrc(null); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [lightboxSrc]);
 
   const openLightbox = useCallback((src: string) => setLightboxSrc(src), []);
   const closeLightbox = useCallback(() => setLightboxSrc(null), []);
@@ -135,30 +129,7 @@ export default function MessageList({ messages }: Props) {
         </div>
       </div>
 
-      {lightboxSrc && (
-        <div className="lightbox" onClick={closeLightbox}>
-          <button className="lightbox__close" onClick={closeLightbox} title="Закрыть">
-            <CloseIcon width="20" height="20" strokeWidth="2" />
-          </button>
-          <a
-            className="lightbox__download"
-            href={lightboxSrc}
-            download
-            target="_blank"
-            rel="noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            title="Скачать"
-          >
-            <DownloadIcon width="18" height="18" />
-          </a>
-          <img
-            src={lightboxSrc}
-            alt="Fullscreen"
-            className="lightbox__img"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      )}
+      {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={closeLightbox} />}
     </>
   );
 }

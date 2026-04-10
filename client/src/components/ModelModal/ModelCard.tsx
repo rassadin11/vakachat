@@ -2,37 +2,7 @@ import { useChatStore } from '../../store/chatStore';
 import { ProviderLogo } from './ProviderLogo';
 import { Model } from '../../types';
 import { CheckmarkIcon, BrainIcon, VisionIcon, FileIcon } from '../../assets/icons';
-
-function formatPrice(pricing?: Model["pricing"]) {
-  if (!pricing) return null;
-
-  const inp = parseFloat(pricing.promptRUB) * 10_000;
-  const out = parseFloat(pricing.completionRUB) * 10_000;
-
-  const fmt = (n: number) =>
-    n === 0 ? '$0' : n < 8 ? `${n.toFixed(3)} ₽` : `${n.toFixed(2)} ₽`;
-  return { free: false, input: fmt(inp), output: fmt(out) };
-}
-
-function isReasoningModel(model: Model): boolean {
-  if (model.supported_parameters?.includes('reasoning')) return true;
-  const id = model.id.toLowerCase();
-  return (
-    /\/o\d/.test(id) ||
-    id.includes('-r1') ||
-    id.includes(':thinking') ||
-    id.includes('qwq') ||
-    id.includes('deepseek-r')
-  );
-}
-
-function isVisionModel(model: Model): boolean {
-  return !!model.architecture?.input_modalities?.includes('image');
-}
-
-function isFilesModel(model: Model): boolean {
-  return !!model.architecture?.input_modalities?.includes('file');
-}
+import { isReasoningModel, isVisionModel, isFilesModel, formatModelPrice } from '../../utils/modelCapabilities';
 
 interface ModelCardProps {
   model: Model;
@@ -43,7 +13,7 @@ interface ModelCardProps {
 }
 
 export function ModelCard({ model, isActive, activeChatId, handleClose, locked }: ModelCardProps) {
-  const price = formatPrice(model.pricing);
+  const price = formatModelPrice(model.pricing);
   const reasoning = isReasoningModel(model);
   const vision = isVisionModel(model);
   const setModel = useChatStore((s) => s.setModel);
