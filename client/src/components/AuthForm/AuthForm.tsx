@@ -68,8 +68,6 @@ export default function AuthForm({ mode, onModeChange }: AuthFormProps): JSX.Ele
             </header>
 
             <div className={styles.fields} key={mode}>
-
-                {/* Email */}
                 <FormField
                     label="Email"
                     error={errors.email}
@@ -91,7 +89,6 @@ export default function AuthForm({ mode, onModeChange }: AuthFormProps): JSX.Ele
                     </div>
                 </FormField>
 
-                {/* Password */}
                 <FormField
                     label="Пароль"
                     hint="мин. 8 символов"
@@ -122,7 +119,6 @@ export default function AuthForm({ mode, onModeChange }: AuthFormProps): JSX.Ele
                     </div>
                 </FormField>
 
-                {/* Confirm password */}
                 {isRegister && (
                     <FormField
                         label="Подтверждение пароля"
@@ -151,7 +147,6 @@ export default function AuthForm({ mode, onModeChange }: AuthFormProps): JSX.Ele
                     </FormField>
                 )}
 
-                {/* Promo code */}
                 {isRegister && (
                     <FormField
                         label="Промокод"
@@ -175,7 +170,6 @@ export default function AuthForm({ mode, onModeChange }: AuthFormProps): JSX.Ele
                         </div>
                     </FormField>
                 )}
-
             </div>
 
             <button

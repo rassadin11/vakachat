@@ -283,6 +283,12 @@
     letter-spacing: 0.3px;
   }
 
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
   &__copy {
     display: flex;
     align-items: center;

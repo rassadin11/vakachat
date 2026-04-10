@@ -14,6 +14,7 @@ interface Props {
   content: string;
   streamCursor?: boolean;
   modelId?: string;
+  onShowMarkdown?: (content: string) => void;
 }
 
 function getLanguage(children: React.ReactNode): string | null {
@@ -23,7 +24,7 @@ function getLanguage(children: React.ReactNode): string | null {
   return match ? match[1] : null;
 }
 
-function CodeBlock({ children }: { children: React.ReactNode }) {
+function CodeBlock({ children, onShowMarkdown }: { children: React.ReactNode; onShowMarkdown?: (content: string) => void }) {
   const [copied, setCopied] = useState(false);
   const language = getLanguage(children);
 
@@ -32,26 +33,38 @@ function CodeBlock({ children }: { children: React.ReactNode }) {
     copyToClipboard(code).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    }).catch(() => {});
+    }).catch(() => { });
+  };
+
+  const handleShow = () => {
+    const code = extractText(children);
+    onShowMarkdown?.(code);
   };
 
   return (
     <div className="md-code-block">
       <div className="md-code-block__header">
         <span className="md-code-block__lang">{language ?? 'code'}</span>
-        <button className="md-code-block__copy" onClick={handleCopy} title="Скопировать">
-          {copied ? (
-            <>
-              <CheckmarkIcon width="13" height="13" />
-              Скопировано
-            </>
-          ) : (
-            <>
-              <CopyIcon width="13" height="13" />
-              Копировать
-            </>
+        <div className="md-code-block__actions">
+          {language === 'markdown' && onShowMarkdown && (
+            <button className="md-code-block__copy" onClick={handleShow} title="Показать превью">
+              Показать ответ
+            </button>
           )}
-        </button>
+          <button className="md-code-block__copy" onClick={handleCopy} title="Скопировать">
+            {copied ? (
+              <>
+                <CheckmarkIcon width="13" height="13" />
+                Скопировано
+              </>
+            ) : (
+              <>
+                <CopyIcon width="13" height="13" />
+                Копировать
+              </>
+            )}
+          </button>
+        </div>
       </div>
       <pre>{children}</pre>
     </div>
@@ -107,7 +120,7 @@ function TableBlock({ children }: { children: React.ReactNode }) {
     copyToClipboard(tsv).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    }).catch(() => {});
+    }).catch(() => { });
   };
 
   return (
@@ -145,27 +158,6 @@ function isMathDisplayElement(child: React.ReactNode): boolean {
   );
 }
 
-const components: Components = {
-  pre({ children }) {
-    return <CodeBlock>{children}</CodeBlock>;
-  },
-  table({ children }) {
-    return <TableBlock>{children}</TableBlock>;
-  },
-  p({ children }) {
-    const significant = React.Children.toArray(children).filter(
-      (c) => !(typeof c === 'string' && c.trim() === ''),
-    );
-    if (significant.length === 1 && isMathDisplayElement(significant[0])) {
-      return <p style={{ display: 'flex', justifyContent: 'center', overflowX: 'auto' }}>{children}</p>;
-    }
-    return <p>{children}</p>;
-  },
-  img({ src, alt }) {
-    return <img src={src} alt={alt ?? ''} className="md-image" />;
-  },
-};
-
 // Модели, использующие \[...\] и \(...\) вместо $$...$$ и $...$
 const LATEX_BRACKET_MODELS = ['openai/', 'deepseek/', 'z-ai/', 'moonshotai/'];
 
@@ -178,8 +170,30 @@ function normalizeMath(text: string, modelId?: string): string {
   return text;
 }
 
-export default function MarkdownMessage({ content, streamCursor, modelId }: Props) {
+export default function MarkdownMessage({ content, streamCursor, modelId, onShowMarkdown }: Props) {
   const normalized = normalizeMath(content, modelId);
+
+  const components: Components = React.useMemo(() => ({
+    pre({ children }) {
+      return <CodeBlock onShowMarkdown={onShowMarkdown}>{children}</CodeBlock>;
+    },
+    table({ children }) {
+      return <TableBlock>{children}</TableBlock>;
+    },
+    p({ children }) {
+      const significant = React.Children.toArray(children).filter(
+        (c) => !(typeof c === 'string' && c.trim() === ''),
+      );
+      if (significant.length === 1 && isMathDisplayElement(significant[0])) {
+        return <p style={{ display: 'flex', justifyContent: 'center', overflowX: 'auto', overflowY: "hidden" }}>{children}</p>;
+      }
+      return <p>{children}</p>;
+    },
+    img({ src, alt }) {
+      return <img src={src} alt={alt ?? ''} className="md-image" />;
+    },
+  }), [onShowMarkdown]);
+
   return (
     <div className="md">
       <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex, rehypeHighlight]} components={components}>

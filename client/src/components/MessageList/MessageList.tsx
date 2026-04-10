@@ -7,13 +7,11 @@ import { ChatBubbleIcon, UserIcon, SunIcon, CheckmarkIcon, CloseIcon, FileIcon, 
 
 interface Props {
   messages: Message[];
+  onShowMarkdown?: (content: string) => void;
 }
 
-export default function MessageList({ messages }: Props) {
-  const isStreaming = useChatStore((s) => s.isStreaming);
-  const { handleContextMessage } = useChatStore(s => s)
-  const user = useChatStore((s) => s.user);
-  const isGuest = useChatStore((s) => s.isGuest);
+export default function MessageList({ messages, onShowMarkdown }: Props) {
+  const { handleContextMessage, user, isGuest, isStreaming } = useChatStore(s => s)
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
@@ -121,7 +119,7 @@ export default function MessageList({ messages }: Props) {
                             onClick={() => openLightbox(msg.image!)}
                           />
                         )}
-                        <MarkdownMessage content={msg.content} streamCursor={isLastAssistant} modelId={msg.model} />
+                        <MarkdownMessage content={msg.content} streamCursor={isLastAssistant} modelId={msg.model} onShowMarkdown={onShowMarkdown} />
                       </>
                     ) : (
                       <span style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</span>
