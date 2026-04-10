@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
+import { useClickOutside } from '../../hooks/useClickOutside';
 import { Mode, ModeId } from '../../utils/modes';
 import { EditIcon } from '../../assets/icons';
 import ModesList from './ModesList';
@@ -12,16 +13,7 @@ export default function MobileModesDropdown({ activeModes, onToggle }: Props) {
   const [modesOpen, setModesOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!modesOpen) return;
-    function handleClick(e: MouseEvent) {
-      if (!dropdownRef.current?.contains(e.target as Node)) {
-        setModesOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [modesOpen]);
+  useClickOutside(dropdownRef, () => setModesOpen(false));
 
   return (
     <div className="message-input__modes-dropdown" ref={dropdownRef}>

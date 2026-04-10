@@ -1,6 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import ReactMarkdown from 'react-markdown';
-import { CheckmarkIcon, CopyIcon, TableIcon } from '../../assets/icons';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeKatex from 'rehype-katex';
 import remarkGfm from 'remark-gfm';
@@ -9,133 +8,13 @@ import type { Components } from 'react-markdown';
 import 'highlight.js/styles/atom-one-dark.css';
 import 'katex/dist/katex.min.css';
 import './MarkdownMessage.scss';
+import { CodeBlock } from './CodeBlock';
+import { TableBlock } from './TableBlock';
 
 interface Props {
   content: string;
   streamCursor?: boolean;
   modelId?: string;
-}
-
-function getLanguage(children: React.ReactNode): string | null {
-  if (!React.isValidElement(children)) return null;
-  const className: string = (children as React.ReactElement<{ className?: string }>).props.className ?? '';
-  const match = /language-(\w+)/.exec(className);
-  return match ? match[1] : null;
-}
-
-function CodeBlock({ children }: { children: React.ReactNode }) {
-  const [copied, setCopied] = useState(false);
-  const language = getLanguage(children);
-
-  const handleCopy = () => {
-    const code = extractText(children);
-    copyToClipboard(code).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }).catch(() => {});
-  };
-
-  return (
-    <div className="md-code-block">
-      <div className="md-code-block__header">
-        <span className="md-code-block__lang">{language ?? 'code'}</span>
-        <button className="md-code-block__copy" onClick={handleCopy} title="Скопировать">
-          {copied ? (
-            <>
-              <CheckmarkIcon width="13" height="13" />
-              Скопировано
-            </>
-          ) : (
-            <>
-              <CopyIcon width="13" height="13" />
-              Копировать
-            </>
-          )}
-        </button>
-      </div>
-      <pre>{children}</pre>
-    </div>
-  );
-}
-
-function copyToClipboard(text: string): Promise<void> {
-  if (navigator.clipboard?.writeText) {
-    return navigator.clipboard.writeText(text).catch(() => copyViaExecCommand(text));
-  }
-  return copyViaExecCommand(text);
-}
-
-function copyViaExecCommand(text: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
-    document.body.appendChild(ta);
-    ta.focus();
-    ta.select();
-    const ok = document.execCommand('copy');
-    document.body.removeChild(ta);
-    ok ? resolve() : reject(new Error('execCommand copy failed'));
-  });
-}
-
-function extractText(node: React.ReactNode): string {
-  if (typeof node === 'string') return node;
-  if (Array.isArray(node)) return node.map(extractText).join('');
-  if (node && typeof node === 'object' && 'props' in (node as object)) {
-    return extractText((node as React.ReactElement).props.children);
-  }
-  return '';
-}
-
-function TableBlock({ children }: { children: React.ReactNode }) {
-  const [copied, setCopied] = useState(false);
-  const wrapRef = useRef<HTMLDivElement>(null);
-
-  const handleCopy = () => {
-    const table = wrapRef.current?.querySelector('table');
-    if (!table) return;
-
-    const tsv = Array.from(table.querySelectorAll('tr'))
-      .map((row) =>
-        Array.from(row.querySelectorAll('th, td'))
-          .map((cell) => cell.textContent?.trim() ?? '')
-          .join('\t'),
-      )
-      .join('\n');
-
-    copyToClipboard(tsv).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }).catch(() => {});
-  };
-
-  return (
-    <div className="md-table-block">
-      <div className="md-table-block__header">
-        <span className="md-table-block__label">
-          <TableIcon width="13" height="13" />
-          Таблица
-        </span>
-        <button className="md-table-block__copy" onClick={handleCopy} title="Скопировать для Excel">
-          {copied ? (
-            <>
-              <CheckmarkIcon width="13" height="13" />
-              Скопировано
-            </>
-          ) : (
-            <>
-              <CopyIcon width="13" height="13" />
-              Копировать для Excel
-            </>
-          )}
-        </button>
-      </div>
-      <div className="md-table-wrap" ref={wrapRef}>
-        <table>{children}</table>
-      </div>
-    </div>
-  );
 }
 
 function isMathDisplayElement(child: React.ReactNode): boolean {

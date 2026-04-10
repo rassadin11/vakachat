@@ -88,19 +88,3 @@
         transform: translateY(0);
     }
 }
-
-.sale {
-    position: absolute;
-    top: 0;
-    width: 100%;
-    text-align: center;
-    background: var(--bg-chat-area-gradient);
-    color: var(--text-primary);
-    padding: 0.75rem;
-
-    span {
-        font-size: 1.25rem;
-        font-weight: bold;
-        color: var(--error)
-    }
-}
