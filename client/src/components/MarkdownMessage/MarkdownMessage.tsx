@@ -1,6 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import ReactMarkdown from 'react-markdown';
-import { CheckmarkIcon, CopyIcon, TableIcon } from '../../assets/icons';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeKatex from 'rehype-katex';
 import remarkGfm from 'remark-gfm';
@@ -9,6 +8,8 @@ import type { Components } from 'react-markdown';
 import 'highlight.js/styles/atom-one-dark.css';
 import 'katex/dist/katex.min.css';
 import './MarkdownMessage.scss';
+import { CodeBlock } from './CodeBlock';
+import { TableBlock } from './TableBlock';
 
 interface Props {
   content: string;

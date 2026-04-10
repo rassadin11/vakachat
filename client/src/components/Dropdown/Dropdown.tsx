@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import "./Dropdown.scss"
 import { useChatStore } from '../../store/chatStore';
 import { ChatBubbleIcon, ChevronDownIcon } from '../../assets/icons';
+import { useClickOutside } from '../../hooks/useClickOutside';
 
 function Dropdown() {
     const { contextLimit, setContextLimit } = useChatStore(s => s)
@@ -15,16 +16,7 @@ function Dropdown() {
         { value: 0, label: 'Не ограничено' },
     ];
 
-    useEffect(() => {
-        const handler = (e: MouseEvent) => {
-            if (contextRef.current && !contextRef.current.contains(e.target as Node)) {
-                setIsContextOpen(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handler);
-        return () => document.removeEventListener('mousedown', handler);
-    }, []);
+    useClickOutside(contextRef, () => setIsContextOpen(false));
 
     return (
         <div className="dropdown__context" ref={contextRef}>

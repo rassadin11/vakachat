@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useClickOutside } from '../../hooks/useClickOutside';
 import { useChatStore } from '../../store/chatStore';
 import './ModelSelector.scss';
 import { SunIcon, ChevronDownIcon, SearchIcon } from '../../assets/icons';
@@ -34,15 +35,7 @@ export default function ModelSelector({ currentModel }: Props) {
     }
   }, [isOpen]);
 
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  useClickOutside(dropdownRef, () => setIsOpen(false));
 
   return (
     <div className="model-selector" ref={dropdownRef}>
