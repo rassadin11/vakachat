@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface CodeRunnerProps {
   code: string;
@@ -11,25 +11,21 @@ const NOISE_PATTERNS = [
   'warnings.warn(',
 ];
 
-function isNoiseLine(line: string): boolean {
-  return NOISE_PATTERNS.some(p => line.includes(p));
-}
-
 const THEME_COLORS = {
   dark: {
-    bg:       '#1a1a1a',
-    axesBg:   '#242424',
-    text:     '#e0e0e0',
-    grid:     '#333333',
-    edge:     '#444444',
+    bg: '#1a1a1a',
+    axesBg: '#242424',
+    text: '#e0e0e0',
+    grid: '#333333',
+    edge: '#444444',
     bodyText: '#e0e0e0',
   },
   light: {
-    bg:       '#f7f7f7',
-    axesBg:   '#ffffff',
-    text:     '#111111',
-    grid:     '#dddddd',
-    edge:     '#cccccc',
+    bg: '#f7f7f7',
+    axesBg: '#ffffff',
+    text: '#111111',
+    grid: '#dddddd',
+    edge: '#cccccc',
     bodyText: '#111111',
   },
 };
@@ -39,17 +35,17 @@ function buildSrcdoc(code: string, isDark: boolean): string {
   const c = isDark ? THEME_COLORS.dark : THEME_COLORS.light;
 
   const rcParams = JSON.stringify({
-    'figure.facecolor':  c.bg,
-    'axes.facecolor':    c.axesBg,
+    'figure.facecolor': c.bg,
+    'axes.facecolor': c.axesBg,
     'savefig.facecolor': c.bg,
-    'text.color':        c.text,
-    'axes.labelcolor':   c.text,
-    'xtick.color':       c.text,
-    'ytick.color':       c.text,
-    'axes.edgecolor':    c.edge,
-    'grid.color':        c.grid,
-    'legend.facecolor':  c.axesBg,
-    'legend.edgecolor':  c.edge,
+    'text.color': c.text,
+    'axes.labelcolor': c.text,
+    'xtick.color': c.text,
+    'ytick.color': c.text,
+    'axes.edgecolor': c.edge,
+    'grid.color': c.grid,
+    'legend.facecolor': c.axesBg,
+    'legend.edgecolor': c.edge,
   });
 
   return `<!DOCTYPE html>
@@ -171,7 +167,7 @@ export function CodeRunner({ code }: CodeRunnerProps) {
       <iframe
         ref={iframeRef}
         sandbox="allow-scripts"
-        srcdoc={buildSrcdoc(code, isDark)}
+        srcDoc={buildSrcdoc(code, isDark)}
         className="md-code-runner__frame"
         title="Code output"
       />
