@@ -15,6 +15,7 @@ interface Props {
   streamCursor?: boolean;
   modelId?: string;
   onShowMarkdown?: (content: string) => void;
+  onRunCode?: (code: string) => void;
 }
 
 function getLanguage(children: React.ReactNode): string | null {
@@ -24,9 +25,10 @@ function getLanguage(children: React.ReactNode): string | null {
   return match ? match[1] : null;
 }
 
-function CodeBlock({ children, onShowMarkdown }: { children: React.ReactNode; onShowMarkdown?: (content: string) => void }) {
+function CodeBlock({ children, onShowMarkdown, onRunCode }: { children: React.ReactNode; onShowMarkdown?: (content: string) => void; onRunCode?: (code: string) => void }) {
   const [copied, setCopied] = useState(false);
   const language = getLanguage(children);
+  const isRunnable = language === 'python' || language === 'py';
 
   const handleCopy = () => {
     const code = extractText(children);
@@ -41,6 +43,10 @@ function CodeBlock({ children, onShowMarkdown }: { children: React.ReactNode; on
     onShowMarkdown?.(code);
   };
 
+  const handleRun = () => {
+    onRunCode?.(extractText(children));
+  };
+
   return (
     <div className="md-code-block">
       <div className="md-code-block__header">
@@ -49,6 +55,11 @@ function CodeBlock({ children, onShowMarkdown }: { children: React.ReactNode; on
           {language === 'markdown' && onShowMarkdown && (
             <button className="md-code-block__copy" onClick={handleShow} title="Показать превью">
               Показать ответ
+            </button>
+          )}
+          {isRunnable && (
+            <button className="md-code-block__run" onClick={handleRun} title="Запустить">
+              Run
             </button>
           )}
           <button className="md-code-block__copy" onClick={handleCopy} title="Скопировать">
@@ -170,12 +181,12 @@ function normalizeMath(text: string, modelId?: string): string {
   return text;
 }
 
-export default function MarkdownMessage({ content, streamCursor, modelId, onShowMarkdown }: Props) {
+export default function MarkdownMessage({ content, streamCursor, modelId, onShowMarkdown, onRunCode }: Props) {
   const normalized = normalizeMath(content, modelId);
 
   const components: Components = React.useMemo(() => ({
     pre({ children }) {
-      return <CodeBlock onShowMarkdown={onShowMarkdown}>{children}</CodeBlock>;
+      return <CodeBlock onShowMarkdown={onShowMarkdown} onRunCode={onRunCode}>{children}</CodeBlock>;
     },
     table({ children }) {
       return <TableBlock>{children}</TableBlock>;
@@ -192,7 +203,7 @@ export default function MarkdownMessage({ content, streamCursor, modelId, onShow
     img({ src, alt }) {
       return <img src={src} alt={alt ?? ''} className="md-image" />;
     },
-  }), [onShowMarkdown]);
+  }), [onShowMarkdown, onRunCode]);
 
   return (
     <div className="md">

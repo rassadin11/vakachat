@@ -9,17 +9,20 @@ import { ChatBubbleIcon, UserIcon, SunIcon, CheckmarkIcon, CloseIcon, FileIcon }
 interface Props {
   messages: Message[];
   onShowMarkdown?: (content: string) => void;
+  onRunCode?: (code: string) => void;
 }
 
-export default function MessageList({ messages, onShowMarkdown }: Props) {
+export default function MessageList({ messages, onShowMarkdown, onRunCode }: Props) {
   const { handleContextMessage, user, isGuest, isStreaming } = useChatStore(s => s)
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length, isStreaming]);
+    if (messages[messages.length - 1]?.role === 'user') {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages.length]);
 
   const openLightbox = useCallback((src: string) => setLightboxSrc(src), []);
   const closeLightbox = useCallback(() => setLightboxSrc(null), []);
@@ -113,7 +116,7 @@ export default function MessageList({ messages, onShowMarkdown }: Props) {
                             onClick={() => openLightbox(msg.image!)}
                           />
                         )}
-                        <MarkdownMessage content={msg.content} streamCursor={isLastAssistant} modelId={msg.model} onShowMarkdown={onShowMarkdown} />
+                        <MarkdownMessage content={msg.content} streamCursor={isLastAssistant} modelId={msg.model} onShowMarkdown={onShowMarkdown} onRunCode={onRunCode} />
                       </>
                     ) : (
                       <span style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</span>

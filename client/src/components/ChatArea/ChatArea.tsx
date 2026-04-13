@@ -3,8 +3,9 @@ import { useChatStore } from '../../store/chatStore';
 import MessageList from '../MessageList/MessageList';
 import MessageInput from '../MessageInput/MessageInput';
 import MarkdownPreviewPanel from '../MarkdownPreviewPanel/MarkdownPreviewPanel';
+import { CodeRunner } from '../MarkdownMessage/CodeRunner';
 import './ChatArea.scss';
-import { SidebarToggleIcon, ChatBubbleIcon } from '../../assets/icons';
+import { SidebarToggleIcon, ChatBubbleIcon, CloseIcon } from '../../assets/icons';
 
 function extractMarkdownContent(text: string): string | null {
   const match = text.match(/```markdown\n([\s\S]*)\n```(?:\n|$)/);
@@ -20,6 +21,9 @@ export default function ChatArea() {
   const [previewContent, setPreviewContent] = useState<string | null>(null);
   const [panelDismissed, setPanelDismissed] = useState(false);
   const lastAssistantIdRef = useRef<string | null>(null);
+  const activeChatIdRef = useRef<string | null>(null);
+  const [runnerCode, setRunnerCode] = useState<string | null>(null);
+  const [runnerKey, setRunnerKey] = useState(0);
 
   useEffect(() => {
     if (!activeChat) {
@@ -32,7 +36,20 @@ export default function ChatArea() {
       return;
     }
 
-    if (lastAssistant.id !== lastAssistantIdRef.current) {
+    const chatChanged = activeChat.id !== activeChatIdRef.current;
+    const messageChanged = lastAssistant.id !== lastAssistantIdRef.current;
+
+    if (chatChanged) {
+      // Пользователь переключился на другой чат — не открывать панель автоматически
+      activeChatIdRef.current = activeChat.id;
+      lastAssistantIdRef.current = lastAssistant.id;
+      setPanelDismissed(true);
+      setPreviewContent(null);
+      return;
+    }
+
+    if (messageChanged) {
+      // Новое сообщение в том же чате — разрешить автооткрытие
       lastAssistantIdRef.current = lastAssistant.id;
       setPanelDismissed(false);
     }
@@ -49,6 +66,15 @@ export default function ChatArea() {
     setPanelDismissed(true);
     setPreviewContent(null);
   };
+
+  const handleRunCode = (code: string) => {
+    setRunnerCode(code);
+    setRunnerKey(k => k + 1);
+    setPreviewContent(null);
+    setPanelDismissed(true);
+  };
+
+  const handleCloseRunner = () => setRunnerCode(null);
 
   const handleTitleChange = (e: React.FocusEvent<HTMLParagraphElement>) => {
     const newTitle = e.currentTarget.textContent?.trim() || 'Новый чат';
@@ -85,7 +111,7 @@ export default function ChatArea() {
             <span>Нажмите, чтобы изменить название</span>
           </div>
         </div>
-        {activeChat ? <MessageList messages={activeChat.messages} onShowMarkdown={setPreviewContent} /> :
+        {activeChat ? <MessageList messages={activeChat.messages} onShowMarkdown={setPreviewContent} onRunCode={handleRunCode} /> :
           <div className="app__empty">
             <div className="app__empty-content">
               <ChatBubbleIcon width="48" height="48" strokeWidth="1.5" />
@@ -96,11 +122,23 @@ export default function ChatArea() {
         <MessageInput />
       </div>
 
-      {previewContent && (
-        <div className="chat-area__preview">
+      {runnerCode ? (
+        <div className="chat-area__preview chat-area__preview--runner">
+          <div className="chat-area__runner">
+            <div className="chat-area__runner-header">
+              <span>Вывод Python</span>
+              <button onClick={handleCloseRunner} title="Закрыть">
+                <CloseIcon width="15" height="15" />
+              </button>
+            </div>
+            <CodeRunner key={runnerKey} code={runnerCode} />
+          </div>
+        </div>
+      ) : previewContent ? (
+        <div className="chat-area__preview chat-area__preview--runner">
           <MarkdownPreviewPanel content={previewContent} onClose={handleClosePreview} />
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
