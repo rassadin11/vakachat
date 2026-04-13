@@ -59,7 +59,7 @@ function CodeBlock({ children, onShowMarkdown, onRunCode }: { children: React.Re
           )}
           {isRunnable && (
             <button className="md-code-block__run" onClick={handleRun} title="Запустить">
-              Run
+              Запустить
             </button>
           )}
           <button className="md-code-block__copy" onClick={handleCopy} title="Скопировать">
