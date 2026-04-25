@@ -3,8 +3,10 @@ import { ChatResponse } from "../api/chats";
 export interface User {
   id: string;
   email: string;
+  name?: string;
   balance: string | number;
   balanceUSD: string | number;
+  systemPrompt?: string;
   createdAt: string;
 }
 
@@ -39,6 +41,7 @@ export interface Chat extends ChatResponse {
 export interface Model {
   id: string;
   name: string;
+  company?: string;
   context_length: number;
   architecture: {
     modality: string;

@@ -3,7 +3,7 @@ import * as chatService from '../services/chat.service.js';
 import { prisma } from '../prisma.js'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { getNextMessageOrder, saveAssistantMessage } from '../utils/saveAssistantMessage.js'
-import { getRate } from '../constants/constants.js';
+import { getRate, GLOBAL_SYSTEM_PROMPT } from '../constants/constants.js';
 import { getCachedModels } from '../cache/modelsCache.js';
 
 async function extractPdfText(buffer) {
@@ -23,7 +23,12 @@ async function extractPdfText(buffer) {
 
 export async function createChat(req, res) {
     try {
-        const { title, systemPrompt } = req.body;
+        const { title } = req.body;
+        const user = await prisma.user.findUnique({
+            where: { id: req.userId },
+            select: { systemPrompt: true },
+        });
+        const systemPrompt = [GLOBAL_SYSTEM_PROMPT, user?.systemPrompt].filter(Boolean).join('\n\n') || null;
         const chat = await chatService.createChat(req.userId, { title, systemPrompt });
         res.status(201).json(chat);
     } catch (error) {
@@ -113,7 +118,7 @@ function buildUserMessageContent(text, attachments) {
 
 export async function createMessage(req, res) {
     const { chatId } = req.params;
-    const { role, userId, content, model, price, maxTokens, contextLimit, modelName, attachments, systemPrompt, plugins, isImageModel } = req.body;
+    const { role, userId, content, model, price, maxTokens, contextLimit, modelName, attachments, plugins, isImageModel } = req.body;
 
     if (!content?.trim()) {
         return res.status(400).json({ error: 'Сообщение не может быть пустым' });
@@ -237,7 +242,7 @@ export async function createMessage(req, res) {
         : allHistory;
 
     const messagesForAI = [
-        ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+        ...(chat.systemPrompt ? [{ role: 'system', content: chat.systemPrompt }] : []),
         ...historyForAI,
         { role: 'user', content: userContent },
     ];

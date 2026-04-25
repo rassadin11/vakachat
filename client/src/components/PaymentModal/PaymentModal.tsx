@@ -1,15 +1,25 @@
-// components/PaymentModal/PaymentModal.tsx
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './PaymentModal.module.scss';
 import { PaymentIcon } from '../../assets/icons';
-import { createPortal } from 'react-dom';
+import { paymentsApi } from '../../api/payments';
+import { ApiError } from '../../api/client';
 
 interface PaymentModalProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
+const PRESETS = [10, 50, 100, 200];
+const MIN_AMOUNT = 10;
+const DEFAULT_AMOUNT = 100;
+
 const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose }) => {
+    const [amount, setAmount] = useState<number>(DEFAULT_AMOUNT);
+    const [customInput, setCustomInput] = useState<string>(String(DEFAULT_AMOUNT));
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
+
     const handleKeyDown = useCallback(
         (e: KeyboardEvent) => {
             if (e.key === 'Escape') onClose();
@@ -21,12 +31,49 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose }) => {
         if (isOpen) {
             document.addEventListener('keydown', handleKeyDown);
             document.body.style.overflow = 'hidden';
+        } else {
+            setAmount(DEFAULT_AMOUNT);
+            setCustomInput(String(DEFAULT_AMOUNT));
+            setIsLoading(false);
+            setError('');
         }
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
             document.body.style.overflow = '';
         };
     }, [isOpen, handleKeyDown]);
+
+    function selectPreset(preset: number) {
+        setAmount(preset);
+        setCustomInput(String(preset));
+        setError('');
+    }
+
+    function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const raw = e.target.value.replace(/[^\d.]/g, '');
+        setCustomInput(raw);
+        const parsed = parseFloat(raw);
+        setAmount(isNaN(parsed) ? 0 : parsed);
+        setError('');
+    }
+
+    async function handlePay() {
+        if (amount < MIN_AMOUNT || isLoading) return;
+        setIsLoading(true);
+        setError('');
+        try {
+            const { confirmationUrl } = await paymentsApi.create(amount);
+            window.location.href = confirmationUrl;
+        } catch (e) {
+            setError(e instanceof ApiError ? e.message : 'Произошла ошибка. Попробуйте ещё раз.');
+            setIsLoading(false);
+        }
+    }
+
+    const isPresetActive = (preset: number) =>
+        amount === preset && customInput === String(preset);
+
+    const canPay = amount >= MIN_AMOUNT && !isLoading;
 
     if (!isOpen) return null;
 
@@ -38,38 +85,19 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose }) => {
             aria-modal="true"
             aria-labelledby="payment-modal-title"
         >
-            <div
-                className={styles.modal}
-                onClick={(e) => e.stopPropagation()}
-            >
-                {/* Шапка */}
+            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
                 <div className={styles.header}>
                     <div className={styles.headerLeft}>
                         <div className={styles.iconWrapper}>
                             <PaymentIcon />
                         </div>
                         <h2 className={styles.title} id="payment-modal-title">
-                            Оплата
+                            Пополнение баланса
                         </h2>
                     </div>
-                    <button
-                        className={styles.closeBtn}
-                        onClick={onClose}
-                        aria-label="Закрыть"
-                    >
-                        <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                        >
-                            <path
-                                d="M2 2L14 14M14 2L2 14"
-                                stroke="currentColor"
-                                strokeWidth="1.6"
-                                strokeLinecap="round"
-                            />
+                    <button className={styles.closeBtn} onClick={onClose} aria-label="Закрыть">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M2 2L14 14M14 2L2 14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
                         </svg>
                     </button>
                 </div>
@@ -77,110 +105,60 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose }) => {
                 <div className={styles.divider} />
 
                 <div className={styles.body}>
-                    {/* Иллюстрация */}
-                    <div className={styles.illustration}>
-                        <svg
-                            width="56"
-                            height="56"
-                            viewBox="0 0 56 56"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                        >
-                            <rect
-                                x="6"
-                                y="14"
-                                width="44"
-                                height="30"
-                                rx="5"
-                                stroke="var(--accent)"
-                                strokeWidth="2"
-                                strokeOpacity="0.6"
-                            />
-                            <path
-                                d="M6 23h44"
-                                stroke="var(--accent)"
-                                strokeWidth="2"
-                                strokeOpacity="0.6"
-                            />
-                            <path
-                                d="M14 9h28"
-                                stroke="var(--accent)"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeOpacity="0.4"
-                            />
-                            <circle
-                                cx="40"
-                                cy="35"
-                                r="4"
-                                fill="var(--accent)"
-                                fillOpacity="0.5"
-                            />
-                            <circle
-                                cx="36"
-                                cy="35"
-                                r="4"
-                                fill="var(--accent)"
-                                fillOpacity="0.25"
-                            />
-                            {/* Иконка паузы / тест-режима */}
-                            <circle
-                                cx="28"
-                                cy="35"
-                                r="8"
-                                fill="var(--warning-dim)"
-                                stroke="var(--warning)"
-                                strokeWidth="1.5"
-                                strokeOpacity="0.7"
-                            />
-                            <path
-                                d="M26 32v6M30 32v6"
-                                stroke="var(--warning)"
-                                strokeWidth="1.8"
-                                strokeLinecap="round"
-                                strokeOpacity="0.9"
-                            />
-                        </svg>
+                    <div className={styles.amountSection}>
+                        <span className={styles.sectionLabel}>Выберите сумму</span>
+                        <div className={styles.presetGrid}>
+                            {PRESETS.map((preset) => (
+                                <button
+                                    key={preset}
+                                    type="button"
+                                    className={`${styles.presetBtn} ${isPresetActive(preset) ? styles.presetBtnActive : ''}`}
+                                    onClick={() => selectPreset(preset)}
+                                    disabled={isLoading}
+                                >
+                                    {preset} ₽
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
-                    {/* Бейдж тестового режима */}
-                    <div className={styles.badge}>
-                        <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 12 12"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                        >
-                            <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2" />
-                            <path
-                                d="M6 5v3M6 3.5v.5"
-                                stroke="currentColor"
-                                strokeWidth="1.2"
-                                strokeLinecap="round"
+                    <div className={styles.amountSection}>
+                        <span className={styles.sectionLabel}>Другая сумма</span>
+                        <div className={styles.amountWrap}>
+                            <input
+                                type="text"
+                                inputMode="decimal"
+                                className={styles.amountInput}
+                                value={customInput}
+                                onChange={handleInputChange}
+                                disabled={isLoading}
+                                placeholder="0"
+                                aria-label="Сумма пополнения"
                             />
-                        </svg>
-                        <span>Тестовый режим</span>
+                            <span className={styles.amountSuffix}>₽</span>
+                        </div>
+                        {amount > 0 && amount < MIN_AMOUNT && (
+                            <span className={styles.amountHint}>Минимум {MIN_AMOUNT} ₽</span>
+                        )}
                     </div>
-
-                    {/* Текст */}
-                    <p className={styles.description}>
-                        В данный момент оплата недоступна.
-                    </p>
-                    <p className={styles.subDescription}>
-                        Сайт находится в&nbsp;тестовом режиме. Функция пополнения баланса
-                        будет активирована после завершения тестирования.
-                    </p>
                 </div>
 
-                {/* Футер */}
+                <div className={styles.divider} />
+
                 <div className={styles.footer}>
-                    <button className={styles.okBtn} onClick={onClose}>
-                        Понятно
+                    {error && <p className={styles.errorMsg}>{error}</p>}
+                    <button
+                        type="button"
+                        className={`${styles.payBtn} ${!canPay ? styles.payBtnDisabled : ''}`}
+                        onClick={handlePay}
+                        disabled={!canPay}
+                    >
+                        {isLoading ? 'Загрузка...' : 'Перейти к оплате →'}
                     </button>
                 </div>
             </div>
-        </div>, document.body
+        </div>,
+        document.body
     );
 };
 

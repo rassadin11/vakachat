@@ -227,6 +227,17 @@
     font-size: 15px;
   }
 
+  &__company-header {
+    grid-column: 1 / -1;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--text-secondary);
+    opacity: 0.5;
+    padding: 8px 2px 2px;
+  }
+
   &__section-header {
     grid-column: 1 / -1;
     display: flex;

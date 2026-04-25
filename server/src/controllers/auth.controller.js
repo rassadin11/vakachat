@@ -1,5 +1,6 @@
 // controllers/auth.controller.js
 import * as authService from '../services/auth.service.js';
+import { prisma } from '../prisma.js';
 
 const REFRESH_COOKIE_OPTIONS = {
     httpOnly: true,
@@ -108,5 +109,84 @@ export async function logout(req, res) {
         res.json({ message: 'Выход выполнен успешно' });
     } catch (error) {
         res.status(500).json({ error: 'Ошибка при выходе' });
+    }
+}
+
+export async function forgotPassword(req, res) {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ error: 'Email обязателен' });
+        }
+
+        const result = await authService.requestPasswordReset(email);
+        res.json(result);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+}
+
+export async function getStats(req, res) {
+    try {
+        const userId = req.userId;
+
+        const [user, messageCount, aggregates, spentRub, modelGroups] = await Promise.all([
+            prisma.user.findUnique({
+                where: { id: userId },
+                select: { createdAt: true },
+            }),
+            prisma.message.count({
+                where: { chat: { userId }, role: 'user' },
+            }),
+            prisma.message.aggregate({
+                where: { chat: { userId } },
+                _sum: { inputTokens: true, outputTokens: true },
+            }),
+            prisma.transaction.aggregate({
+                where: { userId, type: 'usage' },
+                _sum: { amount: true },
+            }),
+            prisma.message.groupBy({
+                by: ['model'],
+                where: { chat: { userId }, role: 'assistant', model: { not: null } },
+                _count: { model: true },
+                orderBy: { _count: { model: 'desc' } },
+            }),
+        ]);
+
+        const totalTokens =
+            (aggregates._sum.inputTokens ?? 0) + (aggregates._sum.outputTokens ?? 0);
+
+        res.json({
+            createdAt: user.createdAt,
+            messageCount,
+            totalTokens,
+            spentRub: Number(spentRub._sum.amount ?? 0),
+            favoriteModel: modelGroups[0]?.model ?? null,
+            uniqueModelsUsed: modelGroups.length,
+        });
+    } catch (error) {
+        console.error('Get stats error:', error);
+        res.status(500).json({ error: 'Ошибка получения статистики' });
+    }
+}
+
+export async function resetPassword(req, res) {
+    try {
+        const { token, newPassword } = req.body;
+
+        if (!token || !newPassword) {
+            return res.status(400).json({ error: 'Токен и новый пароль обязательны' });
+        }
+
+        if (newPassword.length < 8) {
+            return res.status(400).json({ error: 'Пароль должен быть минимум 8 символов' });
+        }
+
+        const result = await authService.resetPassword(token, newPassword);
+        res.json(result);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
     }
 }

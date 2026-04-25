@@ -44,6 +44,32 @@
     }
   }
 
+  &--success {
+    background: var(--bg-trial);
+    border-color: var(--accent-border);
+
+    .notification__icon {
+      color: var(--accent);
+    }
+
+    .notification__close:hover {
+      background: var(--accent-dim);
+    }
+  }
+
+  &--error {
+    background: var(--bg-error);
+    border-color: var(--error-border);
+
+    .notification__icon {
+      color: var(--error);
+    }
+
+    .notification__close:hover {
+      background: var(--error-dim);
+    }
+  }
+
   &--trial {
     background: var(--bg-trial);
     border-color: var(--accent-border);

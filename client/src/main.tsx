@@ -5,6 +5,8 @@ import { createBrowserRouter, Outlet, RouterProvider, Navigate } from "react-rou
 import { SidebarToggleIcon } from './assets/icons';
 import { MainPage } from './pages/MainPage/MainPage';
 import AuthPage from './pages/AuthPage/AuthPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage/ResetPasswordPage';
 import Profile from './pages/ProfilePage/Profile';
 import { authApi } from './api/auth';
 import { setAccessToken, getAccessToken } from './api/client';
@@ -44,8 +46,9 @@ function RootLayout(): JSX.Element {
   );
 }
 
-function ProtectedRoute({ children }: { children: JSX.Element }): JSX.Element {
+function ProtectedRoute({ children, authOnly = false }: { children: JSX.Element; authOnly?: boolean }): JSX.Element {
   const isGuest = useChatStore((s) => s.isGuest);
+  if (authOnly) return getAccessToken() ? children : <Navigate to="/login" replace />;
   return (getAccessToken() || isGuest) ? children : <Navigate to="/login" replace />;
 }
 
@@ -86,13 +89,15 @@ const router = createBrowserRouter([
           { path: "/", element: <ProtectedRoute><StartPage /></ProtectedRoute> },
           { path: "/chats/:chatId", element: <ProtectedRoute><MainPage /></ProtectedRoute> },
           { path: "/chats/not-found", element: <ProtectedRoute><NotFoundChat /></ProtectedRoute> },
-          { path: "/profile", element: <ProtectedRoute><Profile /></ProtectedRoute> },
+          { path: "/profile", element: <ProtectedRoute authOnly><Profile /></ProtectedRoute> },
         ],
       },
     ],
   },
   { path: "/login", element: <AuthPage /> },
   { path: "/register", element: <AuthPage /> },
+  { path: "/forgot-password", element: <ForgotPasswordPage /> },
+  { path: "/reset-password", element: <ResetPasswordPage /> },
 ]);
 
 createRoot(document.getElementById('root')!).render(

@@ -1,15 +1,22 @@
 import { useState, useRef, useEffect } from 'react';
 import { useChatStore } from '../../store/chatStore';
+import { authApi, type UserStats } from '../../api/auth';
 import styles from './Profile.module.scss';
 
-const LS_DISPLAY_NAME = 'vakachat_display_name';
-const LS_SYSTEM_PROMPT = 'vakachat_system_prompt';
+function formatTokens(n: number): string {
+  return n.toLocaleString('ru-RU');
+}
+
+function formatModel(id: string): string {
+  return id.includes('/') ? id.split('/').slice(1).join('/') : id;
+}
 
 export default function Profile() {
-  const { user, chats } = useChatStore();
+  const { user, setUser, chats, setNotification } = useChatStore();
 
-  const [displayName, setDisplayName] = useState(() => localStorage.getItem(LS_DISPLAY_NAME) ?? '');
-  const [systemPrompt, setSystemPrompt] = useState(() => localStorage.getItem(LS_SYSTEM_PROMPT) ?? '');
+  const [displayName, setDisplayName] = useState(user?.name ?? '');
+  const [systemPrompt, setSystemPrompt] = useState(user?.systemPrompt ?? '');
+  const [apiStats, setApiStats] = useState<UserStats | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
@@ -19,30 +26,49 @@ export default function Profile() {
     el.style.height = `${el.scrollHeight}px`;
   }, [systemPrompt]);
 
+  useEffect(() => {
+    authApi.getStats().then(setApiStats).catch(() => {});
+  }, []);
+
   const greetingName = displayName || (user?.email?.split('@')[0] ?? 'Гость');
 
-  const saveDisplayName = () => localStorage.setItem(LS_DISPLAY_NAME, displayName);
-  const saveSystemPrompt = () => localStorage.setItem(LS_SYSTEM_PROMPT, systemPrompt);
+  const saveDisplayName = async () => {
+    const trimmed = displayName.trim();
+    if (trimmed === (user?.name ?? '')) return;
+    try {
+      const updated = await authApi.updateMe({ name: trimmed });
+      setUser(updated);
+      setNotification({ type: 'success', message: 'Имя обновлено.' });
+    } catch {
+      setNotification({ type: 'error', message: 'Не удалось сохранить имя.' });
+    }
+  };
 
-  const allMessages = chats.flatMap(c => c.messages);
-  const userMsgs = allMessages.filter(m => m.role === 'user').length;
-  const uniqueModels = new Set(
-    allMessages.filter(m => m.role === 'assistant' && m.model).map(m => m.model!)
-  ).size;
+  const saveSystemPrompt = async () => {
+    const trimmed = systemPrompt.trim();
+    if (trimmed === (user?.systemPrompt ?? '')) return;
+    try {
+      const updated = await authApi.updateMe({ systemPrompt: trimmed });
+      setUser(updated);
+      setNotification({ type: 'success', message: 'Системный промпт обновлён.' });
+    } catch {
+      setNotification({ type: 'error', message: 'Не удалось сохранить системный промпт.' });
+    }
+  };
 
-  const createdAt = user?.createdAt
-    ? new Date(user.createdAt).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
-    : '—';
-
-  const balance = user ? `${parseFloat(String(user.balance)).toFixed(2)} ₽` : '—';
+  const createdAt = apiStats?.createdAt
+    ? new Date(apiStats.createdAt).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    : user?.createdAt
+      ? new Date(user.createdAt).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
+      : '—';
 
   const stats = [
-    { label: 'Оборот токенов', value: '—' },
-    { label: 'Чатов создано', value: chats.length },
-    { label: 'Сообщений отправлено', value: userMsgs },
-    { label: 'Моделей использовано', value: uniqueModels },
-    { label: 'Аккаунт создан', value: createdAt },
-    { label: 'Баланс', value: balance },
+    { label: 'Токенов использовано',  value: apiStats ? formatTokens(apiStats.totalTokens) : '—' },
+    { label: 'Сообщений отправлено',  value: apiStats ? apiStats.messageCount : '—' },
+    { label: 'Моделей использовано',  value: apiStats ? apiStats.uniqueModelsUsed : chats.length > 0 ? new Set(chats.flatMap(c => c.messages).filter(m => m.model).map(m => m.model!)).size : '—' },
+    { label: 'Любимая модель',        value: apiStats?.favoriteModel ? formatModel(apiStats.favoriteModel) : '—' },
+    { label: 'Чатов создано',         value: chats.length || '—' },
+    { label: 'Аккаунт создан',        value: createdAt },
   ];
 
   return (

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuthForm } from "./useAuthForm";
 import type { AuthFormProps } from "./AuthForm.types";
 import styles from "./AuthForm.module.scss";
@@ -9,6 +10,7 @@ import { StrengthBar } from "./StrengthBar";
 
 export default function AuthForm({ mode, onModeChange }: AuthFormProps): JSX.Element {
     const isRegister = mode === "register";
+    const navigate = useNavigate();
 
     const [showPwd, setShowPwd] = useState<boolean>(false);
     const [showConf, setShowConf] = useState<boolean>(false);
@@ -118,6 +120,16 @@ export default function AuthForm({ mode, onModeChange }: AuthFormProps): JSX.Ele
                         </button>
                     </div>
                 </FormField>
+
+                {!isRegister && (
+                    <button
+                        type="button"
+                        className={styles.forgotLink}
+                        onClick={() => navigate("/forgot-password")}
+                    >
+                        Забыли пароль?
+                    </button>
+                )}
 
                 {isRegister && (
                     <FormField

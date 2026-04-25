@@ -5,8 +5,12 @@ import { clearAccessToken, getAccessToken, setAccessToken } from './client';
 import { client } from "./client"; // твой настроенный axios/fetch клиент
 
 export async function fetchModels(): Promise<Model[]> {
-  const data = await client.get<Model[]>("/models");
-  return data;
+  const data = await client.get<unknown>("/models");
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return [];
+  const grouped = data as Record<string, { company: string; models: Model[] }[]>;
+  return Object.values(grouped).flat().flatMap(g =>
+    (g.models ?? []).map(m => ({ ...m, company: g.company }))
+  );
 }
 
 type ContentPart =

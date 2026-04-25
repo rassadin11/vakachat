@@ -1,0 +1,122 @@
+.root {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-sidebar);
+}
+
+.noiseOverlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-size: 200px;
+    z-index: 0;
+}
+
+.glowOrb {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(120px);
+    opacity: 0.07;
+    animation: orbFloat 8s ease-in-out infinite;
+    background: var(--accent);
+}
+
+.glowOrb1 {
+    width: 500px;
+    height: 500px;
+    top: -100px;
+    left: -100px;
+    animation-delay: 0s;
+}
+
+.glowOrb2 {
+    width: 400px;
+    height: 400px;
+    bottom: -80px;
+    right: -80px;
+    animation-delay: -4s;
+}
+
+@keyframes orbFloat {
+    0%,
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    50% {
+        transform: translate(30px, 20px) scale(1.05);
+    }
+}
+
+.card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 700px;
+    background: var(--bg-chat);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    animation: cardIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.cardSlim {
+    max-width: 480px;
+}
+
+@keyframes cardIn {
+    from {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.accentLine {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.7;
+}
+
+.cardInner {
+    padding: 48px 52px 52px;
+
+    @media (max-width: 600px) {
+        padding: 32px 24px 36px;
+    }
+}
+
+.cornerTl,
+.cornerBr {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+}
+
+.cornerTl {
+    top: -1px;
+    left: -1px;
+    border-top: 2px solid var(--accent);
+    border-left: 3px solid var(--accent);
+}
+
+.cornerBr {
+    bottom: -1px;
+    right: -1px;
+    border-bottom: 2px solid var(--accent);
+    border-right: 2px solid var(--accent);
+}

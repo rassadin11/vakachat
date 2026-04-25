@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.routes.js';
 import chatRoutes from './routes/chat.routes.js';
 import guestRoutes from './routes/guest.routes.js';
+import paymentRoutes from './routes/payment.routes.js';
 import rateLimit from 'express-rate-limit';
 import cors from 'cors';
 import { getModels } from './routes/models.js';
@@ -37,6 +38,7 @@ app.use(cookieParser());
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/chats', authLimiter, chatRoutes);
 app.use('/api/guest', guestLimiter, guestRoutes);
+app.use('/api/payments', paymentRoutes);
 
 app.get("/api/models", authLimiter, getModels);
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Fragment } from 'react';
 import { createPortal } from 'react-dom';
 import { useChatStore, GUEST_ALLOWED_PREFIXES } from '../../store/chatStore';
 import './ModelModal.scss';
@@ -61,7 +61,7 @@ export default function ModelModal({ onClose }: Props) {
     }
   };
 
-  const { filteredLocked, sorted, textModels, imageModels } = filterAndSortModels(
+  const { filteredLocked, sorted, textModelGroups, imageModelGroups } = filterAndSortModels(
     models, lockedModels, search, sortKey, sortDir,
   );
 
@@ -108,25 +108,39 @@ export default function ModelModal({ onClose }: Props) {
             <p className="model-modal__empty">Ничего не найдено</p>
           )}
 
-          {textModels.length > 0 && (
+          {textModelGroups.length > 0 && (
             <>
-              {imageModels.length > 0 && (
+              {imageModelGroups.length > 0 && (
                 <div className="model-modal__section-header">
                   <ChatBubbleIcon width="14" height="14" />
                   Языковые модели
                 </div>
               )}
-              {textModels.map((model) => <ModelCard key={model.id} model={model} isActive={model.id === currentModel.id} activeChatId={activeChatId ?? null} handleClose={handleClose} />)}
+              {textModelGroups.map(({ company, models: groupModels }) => (
+                <Fragment key={company}>
+                  <div className="model-modal__company-header">{company}</div>
+                  {groupModels.map((model) => (
+                    <ModelCard key={model.id} model={model} isActive={model.id === currentModel.id} activeChatId={activeChatId ?? null} handleClose={handleClose} />
+                  ))}
+                </Fragment>
+              ))}
             </>
           )}
 
-          {imageModels.length > 0 && (
+          {imageModelGroups.length > 0 && (
             <>
               <div className="model-modal__section-header">
                 <ImageIcon width="14" height="14" />
                 Генерация изображений
               </div>
-              {imageModels.map((model) => <ModelCard key={model.id} model={model} isActive={model.id === currentModel.id} activeChatId={activeChatId ?? null} handleClose={handleClose} />)}
+              {imageModelGroups.map(({ company, models: groupModels }) => (
+                <Fragment key={company}>
+                  <div className="model-modal__company-header">{company}</div>
+                  {groupModels.map((model) => (
+                    <ModelCard key={model.id} model={model} isActive={model.id === currentModel.id} activeChatId={activeChatId ?? null} handleClose={handleClose} />
+                  ))}
+                </Fragment>
+              ))}
             </>
           )}
 

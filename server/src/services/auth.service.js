@@ -2,7 +2,7 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto'; // встроен в Node.js — но в ESM импортируем явно
 import { prisma } from '../prisma.js';
-import { sendVerificationEmail } from './email.service.js'; // .js обязателен в ESM!
+import { sendVerificationEmail, sendPasswordResetEmail } from './email.service.js'; // .js обязателен в ESM!
 import {
     generateAccessToken,
     generateRefreshToken,
@@ -210,4 +210,56 @@ export async function refreshTokens(refreshToken) {
 export async function logout(refreshToken) {
     if (!refreshToken) return;
     await prisma.refreshToken.deleteMany({ where: { token: refreshToken } });
+}
+
+export async function requestPasswordReset(email) {
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+        throw new Error('Пользователь с таким email не найден');
+    }
+
+    await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
+
+    const token = crypto.randomBytes(32).toString('hex');
+    await prisma.passwordResetToken.create({
+        data: {
+            userId: user.id,
+            token,
+            expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+        },
+    });
+
+    await sendPasswordResetEmail(email, token);
+
+    return { message: 'Письмо с инструкциями отправлено на ваш email' };
+}
+
+export async function resetPassword(token, newPassword) {
+    const resetToken = await prisma.passwordResetToken.findUnique({
+        where: { token },
+        include: { user: true },
+    });
+
+    if (!resetToken) {
+        throw new Error('Неверный или устаревший токен');
+    }
+
+    if (resetToken.expiresAt < new Date()) {
+        await prisma.passwordResetToken.delete({ where: { token } });
+        throw new Error('Срок действия токена истёк. Запросите новое письмо.');
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+
+    await prisma.$transaction([
+        prisma.user.update({
+            where: { id: resetToken.userId },
+            data: { passwordHash },
+        }),
+        prisma.passwordResetToken.delete({ where: { token } }),
+        prisma.refreshToken.deleteMany({ where: { userId: resetToken.userId } }),
+    ]);
+
+    return { message: 'Пароль успешно изменён' };
 }

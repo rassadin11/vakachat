@@ -1,6 +1,8 @@
 import { Model } from "../../types";
 import { SortDir, SortKey } from "./types";
 
+export type CompanyGroup = { company: string; models: Model[] };
+
 function getPrice(pricing: { prompt: string; completion: string } | undefined, field: 'prompt' | 'completion'): number {
     return parseFloat(pricing?.[field] ?? '0');
 }
@@ -11,6 +13,16 @@ function isTextModel(model: Model): boolean {
 
 function isImageOutputModel(model: Model): boolean {
     return !!model.architecture?.output_modalities?.includes('image');
+}
+
+function groupByCompany(models: Model[]): CompanyGroup[] {
+    const map = new Map<string, Model[]>();
+    for (const m of models) {
+        const key = m.company ?? 'Другие';
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push(m);
+    }
+    return Array.from(map.entries()).map(([company, models]) => ({ company, models }));
 }
 
 export function filterAndSortModels(
@@ -37,7 +49,7 @@ export function filterAndSortModels(
     return {
         filteredLocked,
         sorted,
-        textModels: sorted.filter(isTextModel),
-        imageModels: sorted.filter(isImageOutputModel),
+        textModelGroups: groupByCompany(sorted.filter(isTextModel)),
+        imageModelGroups: groupByCompany(sorted.filter(isImageOutputModel)),
     };
 }

@@ -23,12 +23,14 @@ model User {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   amountOfQueries Int      @default(0)
+  systemPrompt    String   @default("")
 
   chats                   Chat[]
   transactions            Transaction[]
   emailVerificationTokens EmailVerificationToken[]
   passwordResetTokens     PasswordResetToken[]
   refreshTokens           RefreshToken[]
+  payments                Payment[]
 }
 
 model Chat {
@@ -140,4 +142,19 @@ model PromoCode {
   usedCount Int      @default(0)
   bonus     Decimal  @db.Decimal(10, 2)
   createdAt DateTime @default(now())
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  userId      String
+  yookassaId  String   @unique
+  amountRub   Decimal  @db.Decimal(10, 2)
+  status      String   @default("pending") // pending | succeeded | canceled
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([yookassaId])
+  @@index([userId])
 }

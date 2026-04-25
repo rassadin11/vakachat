@@ -21,7 +21,7 @@ function isGuestModel(modelId: string): boolean {
   return GUEST_ALLOWED_PREFIXES.some(p => modelId.startsWith(p));
 }
 
-export type NotificationType = 'balance' | 'trial';
+export type NotificationType = 'balance' | 'trial' | 'success' | 'error';
 
 export interface AppNotification {
   type: NotificationType;
